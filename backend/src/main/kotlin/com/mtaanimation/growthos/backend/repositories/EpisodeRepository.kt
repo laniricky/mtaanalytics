@@ -23,10 +23,12 @@ class EpisodeRepository {
         if (existing != null) {
             EpisodesTable.update({ EpisodesTable.id eq existing[EpisodesTable.id] }) {
                 it[releaseDate] = releaseDateInstant
-                it[title] = request.title
-                it[totalViews] = request.totalViews
-                it[productionCost] = request.productionCost
+                it[views] = request.views
+                it[revenue] = request.revenue
                 it[watchTimeHours] = request.watchTimeHours
+                it[shares] = request.shares
+                it[comments] = request.comments
+                it[likes] = request.likes
             }
         } else {
             EpisodesTable.insert {
@@ -35,10 +37,12 @@ class EpisodeRepository {
                 it[season] = request.season
                 it[episode] = request.episode
                 it[releaseDate] = releaseDateInstant
-                it[title] = request.title
-                it[totalViews] = request.totalViews
-                it[productionCost] = request.productionCost
+                it[views] = request.views
+                it[revenue] = request.revenue
                 it[watchTimeHours] = request.watchTimeHours
+                it[shares] = request.shares
+                it[comments] = request.comments
+                it[likes] = request.likes
                 it[createdAt] = LocalDateTime.now()
             }
         }

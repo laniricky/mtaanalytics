@@ -24,7 +24,7 @@ class AuthApiService @Inject constructor(
     private val authDataStore: AuthDataStore
 ) {
     companion object {
-        const val BASE_URL = "http://10.0.2.2:8080" // Emulator loopback; replace with production URL
+        const val BASE_URL = "https://mtaanalytics.onrender.com" // Production backend
     }
 
     /**
@@ -60,6 +60,9 @@ class AuthApiService @Inject constructor(
 
     private fun String.sha256(): String {
         val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(this.toByteArray())
-        return bytes.joinToString("") { "%02x".format(it) }
+        return bytes.joinToString("") { 
+            val hex = (it.toInt() and 0xFF).toString(16)
+            if (hex.length == 1) "0$hex" else hex
+        }
     }
 }

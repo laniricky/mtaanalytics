@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mtaanimation.growthos.android.domain.repository.DashboardRepository
 import com.mtaanimation.growthos.android.domain.repository.StatsRepository
-import com.mtaanimation.growthos.shared.models.PlatformStatsDto
+import com.mtaanimation.growthos.shared.models.PlatformStats
 import com.mtaanimation.growthos.shared.projection.PlatformProjection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 data class PlatformDetailState(
     val projection: PlatformProjection,
-    val historicalStats: List<PlatformStatsDto>
+    val historicalStats: List<PlatformStats>
 )
 
 sealed interface PlatformsUiState {
@@ -56,7 +56,7 @@ class PlatformsViewModel @Inject constructor(
                 val details = dashboard.platformProjections.map { proj ->
                     PlatformDetailState(
                         projection = proj,
-                        historicalStats = allStats.filter { it.platformType == proj.platformType }
+                        historicalStats = allStats.filter { it.platformType.name.equals(proj.platformType, ignoreCase = true) }
                             .sortedBy { it.dateRecordedEpochMillis }
                     )
                 }

@@ -38,7 +38,7 @@ class GoalsViewModel @Inject constructor(
             _submitState.value = TrackingSubmitState.Submitting
             
             val request = RecordStatsRequest(
-                platformType = platformType,
+                platformType = com.mtaanimation.growthos.shared.models.PlatformType.valueOf(platformType.uppercase()),
                 currentFollowers = currentFollowers,
                 target2036 = target2036,
                 dateRecordedEpochMillis = dateEpochMillis

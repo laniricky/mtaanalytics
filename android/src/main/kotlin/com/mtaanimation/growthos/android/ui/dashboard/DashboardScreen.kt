@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,12 +79,7 @@ fun DashboardScreen(
         bottomBar = { DashboardBottomBar(navController) },
         containerColor = BrandCharcoal
     ) { paddingValues ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = {
-                isRefreshing = true
-                viewModel.refresh()
-            },
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -185,13 +179,14 @@ private fun DashboardContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    val finishDate = projection.projectedFinishDateEpochMillis
                     MetricCard(
                         label = "Projected Finish",
                         value = projectedDate,
                         subLabel = "at current rate",
                         accentColor = when {
-                            projection.projectedFinishDateEpochMillis == null -> BrandMuted
-                            projection.projectedFinishDateEpochMillis <= projection.deadlineEpochMillis -> BrandAhead
+                            finishDate == null -> BrandMuted
+                            finishDate <= projection.deadlineEpochMillis -> BrandAhead
                             else -> BrandBehind
                         },
                         modifier = Modifier.weight(1f)
@@ -274,7 +269,7 @@ private fun DashboardBottomBar(navController: NavController) {
     val items = listOf(
         NavItem("Dashboard", Icons.Default.Dashboard, Screen.Dashboard),
         NavItem("Platforms", Icons.Default.BarChart, Screen.Platforms),
-        NavItem("Goals", Icons.Default.Flag, Screen.Goals),
+        NavItem("Custom Goals", Icons.Default.Flag, Screen.CustomGoals),
         NavItem("Revenue", Icons.Default.AttachMoney, Screen.Revenue),
         NavItem("Settings", Icons.Default.Settings, Screen.Settings)
     )

@@ -73,6 +73,24 @@ fun SettingsScreen(
                     onSave = { y, t, f, i -> viewModel.updateWeeklyTargets(y, t, f, i) }
                 )
             }
+            
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        viewModel.logout {
+                            navController.navigate(com.mtaanimation.growthos.android.ui.navigation.Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Log Out", color = BrandWhite, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }

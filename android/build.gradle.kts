@@ -82,6 +82,7 @@ dependencies {
     // Hilt
     implementation("com.google.dagger:hilt-android:2.50")
     kapt("com.google.dagger:hilt-android-compiler:2.50")
+    kapt("com.squareup:javapoet:1.13.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
     // Material Icons Extended (for Icons.Default.Email etc.)

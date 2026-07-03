@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.clip
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -46,16 +45,6 @@ fun PlatformCard(
         )
     }
 
-    val statusColor = when (GrowthStatus.valueOf(platform.platformType.let {
-        // Re-derive status color from the projection's status field
-        platform.toString() // status is on PlatformProjection directly
-        "UNKNOWN"
-    })) {
-        GrowthStatus.AHEAD -> BrandAhead
-        GrowthStatus.ON_TRACK -> BrandOnTrack
-        GrowthStatus.BEHIND -> BrandBehind
-        else -> BrandMuted
-    }
 
     // Derive platform accent color
     val accentColor = platformAccentColor(platform.platformType)
@@ -88,10 +77,7 @@ fun PlatformCard(
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
             }
-            StatusBadge(
-                status = try { GrowthStatus.valueOf(platform.platformType) }
-                catch (_: Exception) { GrowthStatus.UNKNOWN }
-            )
+            StatusBadge(status = platform.status)
         }
 
         // Follower counts
@@ -117,7 +103,7 @@ fun PlatformCard(
 
         // Animated progress bar
         LinearProgressIndicator(
-            progress = { animatedProgress.value },
+            progress = animatedProgress.value,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)

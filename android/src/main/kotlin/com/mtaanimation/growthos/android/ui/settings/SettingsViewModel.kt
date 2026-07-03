@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.mtaanimation.growthos.android.data.network.AuthApiService
 
 data class SettingsUiState(
     val isDarkMode: Boolean = true,
@@ -21,17 +22,22 @@ data class SettingsUiState(
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val settingsDataStore: SettingsDataStore
+    private val settingsDataStore: SettingsDataStore,
+    private val authApiService: AuthApiService
 ) : ViewModel() {
 
     val uiState = combine(
-        settingsDataStore.isDarkMode,
-        settingsDataStore.notificationsEnabled,
-        settingsDataStore.ytWeeklyTarget,
-        settingsDataStore.ttWeeklyTarget,
-        settingsDataStore.fbWeeklyTarget,
-        settingsDataStore.igWeeklyTarget
-    ) { dark, notif, yt, tt, fb, ig ->
+        combine(
+            settingsDataStore.isDarkMode,
+            settingsDataStore.notificationsEnabled,
+            settingsDataStore.ytWeeklyTarget
+        ) { dark, notif, yt -> Triple(dark, notif, yt) },
+        combine(
+            settingsDataStore.ttWeeklyTarget,
+            settingsDataStore.fbWeeklyTarget,
+            settingsDataStore.igWeeklyTarget
+        ) { tt, fb, ig -> Triple(tt, fb, ig) }
+    ) { (dark, notif, yt), (tt, fb, ig) ->
         SettingsUiState(dark, notif, yt, tt, fb, ig)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
@@ -45,5 +51,10 @@ class SettingsViewModel @Inject constructor(
 
     fun updateWeeklyTargets(yt: Int, tt: Int, fb: Int, ig: Int) = viewModelScope.launch {
         settingsDataStore.setWeeklyTargets(yt, tt, fb, ig)
+    }
+
+    fun logout(onComplete: () -> Unit) = viewModelScope.launch {
+        authApiService.logout()
+        onComplete()
     }
 }

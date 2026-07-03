@@ -1,0 +1,56 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Horizontal Base Line -->
+    <path
+        android:pathData="M 92,340 L 414,340"
+        android:strokeColor="#606264"
+        android:strokeWidth="8"
+        android:strokeLineCap="round" />
+
+    <!-- Stylized 'M' Shape -->
+    <path
+        android:pathData="M 110,315 L 110,170 L 205,275 L 300,170 L 300,315"
+        android:strokeWidth="18"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="miter"
+        android:strokeMiterLimit="4">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="512"
+                android:endY="0"
+                android:type="linear">
+                <item android:offset="0" android:color="#606264"/>
+                <item android:offset="0.4" android:color="#606264"/>
+                <item android:offset="0.4" android:color="#f37a1f"/>
+                <item android:offset="1" android:color="#f37a1f"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Vertical Data Bars -->
+    <path
+        android:pathData="M 332,260 L 332,315"
+        android:strokeColor="#606264"
+        android:strokeWidth="18"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M 364,225 L 364,315"
+        android:strokeColor="#606264"
+        android:strokeWidth="18"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M 396,185 L 396,315"
+        android:strokeColor="#f37a1f"
+        android:strokeWidth="18"
+        android:strokeLineCap="round" />
+
+</vector>

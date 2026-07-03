@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Minimal window theme for a Compose-only app (no AppCompat needed).
+         Compose handles all UI theming; this just sets the window chrome. -->
+    <style name="Theme.GrowthOS" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#202428</item>
+        <item name="android:statusBarColor">#202428</item>
+        <item name="android:navigationBarColor">#202428</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+</resources>

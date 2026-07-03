@@ -22,12 +22,12 @@ import com.mtaanimation.growthos.android.ui.dashboard.DashboardScreen
  * Register share state without duplicating the Ktor client.
  */
 @Composable
-fun AppNavGraph(navController: NavHostController) {
+fun AppNavGraph(navController: NavHostController, startDestination: String = Screen.Login.route) {
     val authViewModel: AuthViewModel = hiltViewModel()
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
+        startDestination = startDestination
     ) {
         composable(Screen.Login.route) {
             LoginScreen(

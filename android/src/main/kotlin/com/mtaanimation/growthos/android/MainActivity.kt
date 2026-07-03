@@ -13,6 +13,16 @@ import com.mtaanimation.growthos.android.ui.navigation.AppNavGraph
 import com.mtaanimation.growthos.android.ui.theme.GrowthOSTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import com.mtaanimation.growthos.android.data.datastore.AuthDataStore
+import com.mtaanimation.growthos.android.ui.navigation.Screen
+import com.mtaanimation.growthos.android.ui.theme.BrandOrange
+import kotlinx.coroutines.flow.first
+import javax.inject.Inject
+
 /**
  * Single-activity entry point.
  * Edge-to-edge is enabled so the app draws behind the status bar —
@@ -20,6 +30,10 @@ import dagger.hilt.android.AndroidEntryPoint
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    
+    @Inject
+    lateinit var authDataStore: AuthDataStore
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -29,8 +43,25 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val navController = rememberNavController()
-                    AppNavGraph(navController = navController)
+                    var isReady by remember { mutableStateOf(false) }
+                    var startDest by remember { mutableStateOf(Screen.Login.route) }
+
+                    LaunchedEffect(Unit) {
+                        val token = authDataStore.tokenFlow.first()
+                        if (token != null) {
+                            startDest = Screen.Dashboard.route
+                        }
+                        isReady = true
+                    }
+
+                    if (isReady) {
+                        val navController = rememberNavController()
+                        AppNavGraph(navController = navController, startDestination = startDest)
+                    } else {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = BrandOrange)
+                        }
+                    }
                 }
             }
         }

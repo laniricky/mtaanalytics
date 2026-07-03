@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import com.mtaanimation.growthos.shared.models.PlatformStatsDto
+import com.mtaanimation.growthos.shared.models.PlatformStats
 
 /**
  * A beautiful, smooth line chart for historical platform stats.
@@ -20,7 +20,7 @@ import com.mtaanimation.growthos.shared.models.PlatformStatsDto
  */
 @Composable
 fun HistoricalLineChart(
-    stats: List<PlatformStatsDto>,
+    stats: List<PlatformStats>,
     lineColor: Color,
     modifier: Modifier = Modifier
 ) {

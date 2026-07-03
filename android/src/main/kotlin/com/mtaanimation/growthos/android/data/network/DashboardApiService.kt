@@ -24,7 +24,7 @@ class DashboardApiService @Inject constructor(
     private val authDataStore: AuthDataStore
 ) {
     companion object {
-        private const val BASE_URL = "http://10.0.2.2:8080"
+        private const val BASE_URL = "https://mtaanalytics.onrender.com"
     }
 
     suspend fun getDashboardProjection(

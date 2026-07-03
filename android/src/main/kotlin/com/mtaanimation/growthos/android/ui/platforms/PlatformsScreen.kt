@@ -58,13 +58,13 @@ fun PlatformsScreen(
                         isRefreshing = true
                         viewModel.loadData()
                     }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandCyan)
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandOrange)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandDeepNavy)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandCharcoal)
             )
         },
-        containerColor = BrandDeepNavy
+        containerColor = BrandCharcoal
     ) { paddingValues ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -211,7 +211,7 @@ private fun PlatformDetailCard(detail: PlatformDetailState) {
 @Composable
 private fun LoadingState() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = BrandCyan)
+        CircularProgressIndicator(color = BrandOrange)
     }
 }
 
@@ -221,8 +221,8 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Icon(Icons.Default.Warning, contentDescription = null, tint = BrandBehind, modifier = Modifier.size(48.dp))
             Text(text = message, color = BrandMuted)
-            Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = BrandCyan)) {
-                Text("Retry", color = BrandDeepNavy)
+            Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)) {
+                Text("Retry", color = BrandCharcoal)
             }
         }
     }
@@ -240,5 +240,5 @@ private fun platformAccentColor(platformType: String): Color = when (platformTyp
     "FACEBOOK" -> Color(0xFF1877F2)
     "INSTAGRAM" -> Color(0xFFE1306C)
     "X" -> Color(0xFF9EC4F7)
-    else -> BrandCyan
+    else -> BrandOrange
 }

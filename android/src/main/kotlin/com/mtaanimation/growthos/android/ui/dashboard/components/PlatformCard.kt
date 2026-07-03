@@ -159,5 +159,5 @@ private fun platformAccentColor(platformType: String): Color = when (platformTyp
     "FACEBOOK" -> Color(0xFF1877F2)
     "INSTAGRAM" -> Color(0xFFE1306C)
     "X" -> Color(0xFF9EC4F7)
-    else -> BrandCyan
+    else -> BrandOrange
 }

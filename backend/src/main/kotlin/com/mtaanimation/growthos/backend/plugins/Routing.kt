@@ -18,6 +18,8 @@ fun Application.configureRouting() {
     val projectionService = ProjectionService(platformStatsRepository)
     val revenueRepository = com.mtaanimation.growthos.backend.repositories.RevenueRepository()
     val episodeRepository = com.mtaanimation.growthos.backend.repositories.EpisodeRepository()
+    val uploadRepository = com.mtaanimation.growthos.backend.repositories.UploadRepository()
+    val customGoalRepository = com.mtaanimation.growthos.backend.repositories.CustomGoalRepository()
 
     routing {
         authRoutes(userRepository)
@@ -26,5 +28,7 @@ fun Application.configureRouting() {
         projectionRoutes(projectionService, userRepository)
         com.mtaanimation.growthos.backend.routes.revenueRoutes(revenueRepository, userRepository)
         com.mtaanimation.growthos.backend.routes.episodeRoutes(episodeRepository, userRepository)
+        com.mtaanimation.growthos.backend.routes.uploadRoutes(uploadRepository, userRepository)
+        com.mtaanimation.growthos.backend.routes.customGoalRoutes(customGoalRepository, userRepository)
     }
 }

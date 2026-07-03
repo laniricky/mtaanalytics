@@ -20,9 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mtaanimation.growthos.android.ui.theme.BrandCyan
+import com.mtaanimation.growthos.android.ui.theme.BrandOrange
 import com.mtaanimation.growthos.android.ui.theme.BrandDivider
-import com.mtaanimation.growthos.android.ui.theme.BrandViolet
+import com.mtaanimation.growthos.android.ui.theme.BrandGray
 import com.mtaanimation.growthos.android.ui.theme.BrandWhite
 
 /**
@@ -73,7 +73,7 @@ fun GoalProgressRing(
             // Gradient progress arc
             drawArc(
                 brush = Brush.sweepGradient(
-                    colors = listOf(BrandCyan, BrandViolet, BrandCyan),
+                    colors = listOf(BrandOrange, BrandGray, BrandOrange),
                 ),
                 startAngle = startAngle,
                 sweepAngle = sweepAngle,
@@ -89,7 +89,7 @@ fun GoalProgressRing(
             Text(
                 text = "${animatedProgress.value.toInt()}%",
                 style = MaterialTheme.typography.headlineLarge.copy(
-                    brush = Brush.horizontalGradient(listOf(BrandCyan, BrandViolet)),
+                    brush = Brush.horizontalGradient(listOf(BrandOrange, BrandGray)),
                     fontWeight = FontWeight.Bold,
                     fontSize = 36.sp
                 )

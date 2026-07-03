@@ -12,10 +12,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.mtaanimation.growthos.android.ui.theme.BrandCyan
+import com.mtaanimation.growthos.android.ui.theme.BrandOrange
 import com.mtaanimation.growthos.android.ui.theme.BrandMuted
 import com.mtaanimation.growthos.android.ui.theme.BrandSurface
-import com.mtaanimation.growthos.android.ui.theme.BrandViolet
+import com.mtaanimation.growthos.android.ui.theme.BrandGray
 import com.mtaanimation.growthos.android.ui.theme.BrandWhite
 import java.time.Instant
 import java.time.ZoneId
@@ -45,8 +45,8 @@ fun AudienceHeroBanner(
             .background(
                 Brush.linearGradient(
                     colors = listOf(
-                        BrandCyan.copy(alpha = 0.15f),
-                        BrandViolet.copy(alpha = 0.12f)
+                        BrandOrange.copy(alpha = 0.15f),
+                        BrandGray.copy(alpha = 0.12f)
                     )
                 )
             )
@@ -60,7 +60,7 @@ fun AudienceHeroBanner(
             Text(
                 text = combinedFollowers.formatLarge(),
                 style = MaterialTheme.typography.displayLarge.copy(
-                    brush = Brush.horizontalGradient(listOf(BrandCyan, BrandViolet)),
+                    brush = Brush.horizontalGradient(listOf(BrandOrange, BrandGray)),
                     fontWeight = FontWeight.Bold
                 )
             )

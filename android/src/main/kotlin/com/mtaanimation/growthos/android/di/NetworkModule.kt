@@ -59,4 +59,43 @@ object NetworkModule {
     @Singleton
     fun provideStatsRepository(apiService: com.mtaanimation.growthos.android.data.network.StatsApiService): com.mtaanimation.growthos.android.domain.repository.StatsRepository =
         com.mtaanimation.growthos.android.domain.repository.StatsRepository(apiService)
+    @Provides
+    @Singleton
+    fun provideRevenueApiService(client: HttpClient, authDataStore: AuthDataStore): com.mtaanimation.growthos.android.data.network.RevenueApiService =
+        com.mtaanimation.growthos.android.data.network.RevenueApiService(client, authDataStore)
+
+    @Provides
+    @Singleton
+    fun provideRevenueRepository(apiService: com.mtaanimation.growthos.android.data.network.RevenueApiService): com.mtaanimation.growthos.android.domain.repository.RevenueRepository =
+        com.mtaanimation.growthos.android.domain.repository.RevenueRepository(apiService)
+
+    @Provides
+    @Singleton
+    fun provideEpisodesApiService(client: HttpClient, authDataStore: AuthDataStore): com.mtaanimation.growthos.android.data.network.EpisodesApiService =
+        com.mtaanimation.growthos.android.data.network.EpisodesApiService(client, authDataStore)
+
+    @Provides
+    @Singleton
+    fun provideEpisodesRepository(apiService: com.mtaanimation.growthos.android.data.network.EpisodesApiService): com.mtaanimation.growthos.android.domain.repository.EpisodesRepository =
+        com.mtaanimation.growthos.android.domain.repository.EpisodesRepository(apiService)
+
+    @Provides
+    @Singleton
+    fun provideUploadsApiService(client: HttpClient, authDataStore: AuthDataStore): com.mtaanimation.growthos.android.data.network.UploadsApiService =
+        com.mtaanimation.growthos.android.data.network.UploadsApiService(client, authDataStore)
+
+    @Provides
+    @Singleton
+    fun provideUploadsRepository(apiService: com.mtaanimation.growthos.android.data.network.UploadsApiService): com.mtaanimation.growthos.android.domain.repository.UploadsRepository =
+        com.mtaanimation.growthos.android.domain.repository.UploadsRepository(apiService)
+
+    @Provides
+    @Singleton
+    fun provideCustomGoalsApiService(client: HttpClient, authDataStore: AuthDataStore): com.mtaanimation.growthos.android.data.network.CustomGoalsApiService =
+        com.mtaanimation.growthos.android.data.network.CustomGoalsApiService(client, authDataStore)
+
+    @Provides
+    @Singleton
+    fun provideCustomGoalsRepository(apiService: com.mtaanimation.growthos.android.data.network.CustomGoalsApiService): com.mtaanimation.growthos.android.domain.repository.CustomGoalsRepository =
+        com.mtaanimation.growthos.android.domain.repository.CustomGoalsRepository(apiService)
 }

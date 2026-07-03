@@ -6,17 +6,17 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
 private val GrowthOSDarkColorScheme = darkColorScheme(
-    primary          = BrandCyan,
-    onPrimary        = BrandDeepNavy,
-    primaryContainer = BrandCyanDim,
+    primary          = BrandOrange,
+    onPrimary        = BrandCharcoal,
+    primaryContainer = BrandOrangeDim,
     onPrimaryContainer = BrandWhite,
 
-    secondary        = BrandViolet,
+    secondary        = BrandGray,
     onSecondary      = BrandWhite,
-    secondaryContainer = BrandVioletDim,
+    secondaryContainer = BrandGrayDim,
     onSecondaryContainer = BrandWhite,
 
-    background       = BrandDeepNavy,
+    background       = BrandCharcoal,
     onBackground     = BrandWhite,
 
     surface          = BrandSurface,

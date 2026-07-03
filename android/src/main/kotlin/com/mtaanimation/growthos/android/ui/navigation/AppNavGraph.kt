@@ -61,13 +61,26 @@ fun AppNavGraph(navController: NavHostController) {
             com.mtaanimation.growthos.android.ui.platforms.PlatformsScreen(navController = navController)
         }
 
-        composable(Screen.Goals.route) {
+        composable(Screen.LogStats.route) {
             com.mtaanimation.growthos.android.ui.goals.GoalsScreen(navController = navController)
         }
 
-        // Remaining screens will be filled in Feature 9
-        composable(Screen.Revenue.route)   { /* Feature 9 */ }
-        composable(Screen.Episodes.route)  { /* Feature 9 */ }
-        composable(Screen.Settings.route)  { /* Future    */ }
+        composable(Screen.Revenue.route) {
+            com.mtaanimation.growthos.android.ui.revenue.RevenueScreen(navController = navController)
+        }
+        
+        composable(Screen.Episodes.route) {
+            com.mtaanimation.growthos.android.ui.episodes.EpisodesScreen(navController = navController)
+        }
+
+        composable(Screen.Uploads.route) {
+            com.mtaanimation.growthos.android.ui.uploads.UploadsScreen(navController = navController)
+        }
+
+        composable(Screen.CustomGoals.route) {
+            com.mtaanimation.growthos.android.ui.customgoals.CustomGoalsScreen(navController = navController)
+        }
+
+        composable(Screen.Settings.route)  { /* Future */ }
     }
 }

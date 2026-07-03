@@ -55,10 +55,10 @@ fun GoalsScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = BrandWhite)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandDeepNavy)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandCharcoal)
             )
         },
-        containerColor = BrandDeepNavy
+        containerColor = BrandCharcoal
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -89,8 +89,8 @@ fun GoalsScreen(
                         TextButton(
                             onClick = { selectedPlatform = platform },
                             colors = ButtonDefaults.textButtonColors(
-                                containerColor = if (isSelected) BrandCyan.copy(alpha = 0.2f) else Color.Transparent,
-                                contentColor = if (isSelected) BrandCyan else BrandMuted
+                                containerColor = if (isSelected) BrandOrange.copy(alpha = 0.2f) else Color.Transparent,
+                                contentColor = if (isSelected) BrandOrange else BrandMuted
                             ),
                             modifier = Modifier.weight(1f)
                         ) {
@@ -112,8 +112,8 @@ fun GoalsScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BrandCyan,
-                    focusedLabelColor = BrandCyan,
+                    focusedBorderColor = BrandOrange,
+                    focusedLabelColor = BrandOrange,
                     unfocusedBorderColor = BrandDivider,
                     unfocusedLabelColor = BrandMuted
                 ),
@@ -127,8 +127,8 @@ fun GoalsScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BrandCyan,
-                    focusedLabelColor = BrandCyan,
+                    focusedBorderColor = BrandOrange,
+                    focusedLabelColor = BrandOrange,
                     unfocusedBorderColor = BrandDivider,
                     unfocusedLabelColor = BrandMuted
                 ),
@@ -176,15 +176,15 @@ fun GoalsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandCyan),
+                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 if (submitState is TrackingSubmitState.Submitting) {
-                    CircularProgressIndicator(color = BrandDeepNavy, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = BrandCharcoal, modifier = Modifier.size(24.dp))
                 } else {
                     Text(
                         "Record Monthly Stats",
-                        color = BrandDeepNavy,
+                        color = BrandCharcoal,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium
                     )

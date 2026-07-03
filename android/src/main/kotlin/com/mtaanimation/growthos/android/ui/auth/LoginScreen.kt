@@ -58,7 +58,7 @@ fun LoginScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = BrandDeepNavy
+        containerColor = BrandCharcoal
     ) { padding ->
         Box(
             modifier = Modifier
@@ -66,7 +66,7 @@ fun LoginScreen(
                 .padding(padding)
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(BrandSurfaceVariant, BrandDeepNavy),
+                        colors = listOf(BrandSurfaceVariant, BrandCharcoal),
                         center = Offset(0.3f, 0.1f),
                         radius = 1200f
                     )
@@ -93,7 +93,7 @@ fun LoginScreen(
                             text = "Growth OS",
                             style = MaterialTheme.typography.displayLarge.copy(
                                 brush = Brush.horizontalGradient(
-                                    listOf(BrandCyan, BrandViolet)
+                                    listOf(BrandOrange, BrandGray)
                                 )
                             )
                         )
@@ -128,7 +128,7 @@ fun LoginScreen(
                                 label = { Text("Username") },
                                 leadingIcon = {
                                     Icon(Icons.Default.Person, contentDescription = null,
-                                        tint = BrandCyan)
+                                        tint = BrandOrange)
                                 },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -142,7 +142,7 @@ fun LoginScreen(
                                 label = { Text("Password") },
                                 leadingIcon = {
                                     Icon(Icons.Default.Lock, contentDescription = null,
-                                        tint = BrandCyan)
+                                        tint = BrandOrange)
                                 },
                                 trailingIcon = {
                                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -170,18 +170,18 @@ fun LoginScreen(
                                     .fillMaxWidth()
                                     .height(52.dp),
                                 shape = RoundedCornerShape(14.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = BrandCyan)
+                                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
                             ) {
                                 if (uiState is AuthUiState.Loading) {
                                     CircularProgressIndicator(
-                                        color = BrandDeepNavy,
+                                        color = BrandCharcoal,
                                         modifier = Modifier.size(24.dp),
                                         strokeWidth = 2.dp
                                     )
                                 } else {
                                     Text(
                                         "Sign In",
-                                        style = MaterialTheme.typography.labelLarge.copy(color = BrandDeepNavy)
+                                        style = MaterialTheme.typography.labelLarge.copy(color = BrandCharcoal)
                                     )
                                 }
                             }
@@ -191,7 +191,7 @@ fun LoginScreen(
                     TextButton(onClick = onNavigateToRegister) {
                         Text(
                             "Don't have an account? Create one",
-                            style = MaterialTheme.typography.bodyMedium.copy(color = BrandCyan)
+                            style = MaterialTheme.typography.bodyMedium.copy(color = BrandOrange)
                         )
                     }
                 }
@@ -202,10 +202,10 @@ fun LoginScreen(
 
 @Composable
 private fun authTextFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = BrandCyan,
+    focusedBorderColor = BrandOrange,
     unfocusedBorderColor = BrandDivider,
-    focusedLabelColor = BrandCyan,
-    cursorColor = BrandCyan,
+    focusedLabelColor = BrandOrange,
+    cursorColor = BrandOrange,
     focusedTextColor = BrandWhite,
     unfocusedTextColor = BrandWhite,
     unfocusedLabelColor = BrandMuted

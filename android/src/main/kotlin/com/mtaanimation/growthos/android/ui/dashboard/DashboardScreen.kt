@@ -58,7 +58,7 @@ fun DashboardScreen(
                     Text(
                         "Growth OS",
                         style = MaterialTheme.typography.titleLarge.copy(
-                            brush = Brush.horizontalGradient(listOf(BrandCyan, BrandViolet))
+                            brush = Brush.horizontalGradient(listOf(BrandOrange, BrandGray))
                         )
                     )
                 },
@@ -68,17 +68,17 @@ fun DashboardScreen(
                         viewModel.refresh()
                     }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh",
-                            tint = BrandCyan)
+                            tint = BrandOrange)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BrandDeepNavy,
+                    containerColor = BrandCharcoal,
                     titleContentColor = BrandWhite
                 )
             )
         },
         bottomBar = { DashboardBottomBar(navController) },
-        containerColor = BrandDeepNavy
+        containerColor = BrandCharcoal
     ) { paddingValues ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -121,7 +121,7 @@ private fun DashboardContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(BrandDeepNavy),
+            .background(BrandCharcoal),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -170,14 +170,14 @@ private fun DashboardContent(
                         label = "Monthly Target",
                         value = projection.requiredMonthlyGain.formatFollowers(),
                         subLabel = "followers / month",
-                        accentColor = BrandCyan,
+                        accentColor = BrandOrange,
                         modifier = Modifier.weight(1f)
                     )
                     MetricCard(
                         label = "Daily Target",
                         value = projection.requiredDailyGain.formatFollowers(),
                         subLabel = "followers / day",
-                        accentColor = BrandViolet,
+                        accentColor = BrandGray,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -232,7 +232,7 @@ private fun LoadingState() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            CircularProgressIndicator(color = BrandCyan)
+            CircularProgressIndicator(color = BrandOrange)
             Text("Loading dashboard…", style = MaterialTheme.typography.bodyMedium)
         }
     }
@@ -259,9 +259,9 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
             )
             Button(
                 onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = BrandCyan)
+                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
             ) {
-                Text("Retry", color = BrandDeepNavy, fontWeight = FontWeight.SemiBold)
+                Text("Retry", color = BrandCharcoal, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -293,17 +293,17 @@ private fun DashboardBottomBar(navController: NavController) {
                 },
                 icon = {
                     Icon(item.icon, contentDescription = item.label,
-                        tint = if (currentRoute == item.screen.route) BrandCyan else BrandMuted)
+                        tint = if (currentRoute == item.screen.route) BrandOrange else BrandMuted)
                 },
                 label = {
                     Text(
                         item.label,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (currentRoute == item.screen.route) BrandCyan else BrandMuted
+                        color = if (currentRoute == item.screen.route) BrandOrange else BrandMuted
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = BrandCyan.copy(alpha = 0.15f)
+                    indicatorColor = BrandOrange.copy(alpha = 0.15f)
                 )
             )
         }

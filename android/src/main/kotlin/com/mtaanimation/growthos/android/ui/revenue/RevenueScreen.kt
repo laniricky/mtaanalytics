@@ -54,13 +54,13 @@ fun RevenueScreen(
                         isRefreshing = true
                         viewModel.loadData()
                     }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandCyan)
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandOrange)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandDeepNavy)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandCharcoal)
             )
         },
-        containerColor = BrandDeepNavy
+        containerColor = BrandCharcoal
     ) { paddingValues ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -102,7 +102,7 @@ private fun RevenueContent(state: RevenueUiState.Success) {
                     .clip(RoundedCornerShape(24.dp))
                     .background(
                         Brush.linearGradient(
-                            listOf(BrandOnTrack.copy(alpha = 0.2f), BrandViolet.copy(alpha = 0.1f))
+                            listOf(BrandOnTrack.copy(alpha = 0.2f), BrandGray.copy(alpha = 0.1f))
                         )
                     )
                     .padding(24.dp),
@@ -178,7 +178,7 @@ private fun RevenueSourceCol(label: String, amount: Double) {
 @Composable
 private fun LoadingState() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = BrandCyan)
+        CircularProgressIndicator(color = BrandOrange)
     }
 }
 
@@ -188,8 +188,8 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Icon(Icons.Default.Warning, contentDescription = null, tint = BrandBehind, modifier = Modifier.size(48.dp))
             Text(text = message, color = BrandMuted)
-            Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = BrandCyan)) {
-                Text("Retry", color = BrandDeepNavy)
+            Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)) {
+                Text("Retry", color = BrandCharcoal)
             }
         }
     }

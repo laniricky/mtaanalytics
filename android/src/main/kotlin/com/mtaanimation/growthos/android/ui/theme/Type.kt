@@ -55,7 +55,7 @@ val GrowthOSTypography = Typography(
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         letterSpacing = 0.1.sp,
-        color = BrandCyan
+        color = BrandOrange
     ),
     labelSmall = TextStyle(
         fontWeight = FontWeight.Medium,

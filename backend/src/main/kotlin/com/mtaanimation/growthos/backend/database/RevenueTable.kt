@@ -2,10 +2,11 @@ package com.mtaanimation.growthos.backend.database
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.datetime
+import com.mtaanimation.growthos.backend.db.tables.UsersTable
 
 object RevenueTable : Table("revenue_entries") {
     val id = uuid("id")
-    val userId = uuid("user_id").references(Users.id)
+    val userId = uuid("user_id").references(UsersTable.id)
     val monthYear = varchar("month_year", 7) // "YYYY-MM"
     val youtubeRevenue = double("youtube_revenue").default(0.0)
     val tiktokRevenue = double("tiktok_revenue").default(0.0)

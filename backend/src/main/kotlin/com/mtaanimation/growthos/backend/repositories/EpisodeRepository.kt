@@ -1,6 +1,6 @@
 package com.mtaanimation.growthos.backend.repositories
 
-import com.mtaanimation.growthos.backend.database.DatabaseFactory.dbQuery
+import com.mtaanimation.growthos.backend.db.DatabaseFactory.dbQuery
 import com.mtaanimation.growthos.backend.database.EpisodesTable
 import com.mtaanimation.growthos.shared.models.episodes.EpisodeDto
 import com.mtaanimation.growthos.shared.models.episodes.RecordEpisodeRequest

@@ -1,7 +1,7 @@
 package com.mtaanimation.growthos.backend.repositories
 
 import com.mtaanimation.growthos.backend.database.CustomGoalsTable
-import com.mtaanimation.growthos.backend.database.DatabaseFactory.dbQuery
+import com.mtaanimation.growthos.backend.db.DatabaseFactory.dbQuery
 import com.mtaanimation.growthos.shared.models.customgoals.CreateCustomGoalRequest
 import com.mtaanimation.growthos.shared.models.customgoals.CustomGoalDto
 import com.mtaanimation.growthos.shared.models.customgoals.UpdateCustomGoalProgressRequest

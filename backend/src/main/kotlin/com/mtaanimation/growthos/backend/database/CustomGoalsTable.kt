@@ -2,10 +2,11 @@ package com.mtaanimation.growthos.backend.database
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.datetime
+import com.mtaanimation.growthos.backend.db.tables.UsersTable
 
 object CustomGoalsTable : Table("custom_goals") {
     val id = uuid("id")
-    val userId = uuid("user_id").references(Users.id)
+    val userId = uuid("user_id").references(UsersTable.id)
     val title = varchar("title", 255)
     val type = varchar("type", 50)
     val targetValue = double("target_value")

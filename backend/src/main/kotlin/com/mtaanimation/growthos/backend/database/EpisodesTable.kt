@@ -2,10 +2,11 @@ package com.mtaanimation.growthos.backend.database
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.datetime
+import com.mtaanimation.growthos.backend.db.tables.UsersTable
 
 object EpisodesTable : Table("episodes") {
     val id = uuid("id")
-    val userId = uuid("user_id").references(Users.id)
+    val userId = uuid("user_id").references(UsersTable.id)
     val season = integer("season")
     val episode = integer("episode")
     val releaseDate = datetime("release_date")

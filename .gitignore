@@ -1,0 +1,30 @@
+# Gradle
+.gradle
+**/build/
+!src/**/build/
+
+# IDE
+.idea/
+*.iml
+local.properties
+
+# Kotlin/Android
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+bin/
+gen/
+out/
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+# Mac
+.DS_Store
+
+# Log files
+*.log

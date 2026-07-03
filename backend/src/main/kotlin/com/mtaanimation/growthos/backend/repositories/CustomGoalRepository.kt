@@ -26,7 +26,10 @@ class CustomGoalRepository {
             it[deadline] = Instant.ofEpochMilli(request.deadlineEpochMillis).atZone(ZoneId.systemDefault()).toLocalDateTime()
             it[createdAt] = LocalDateTime.now()
         }
-        getGoalById(newId)
+        CustomGoalsTable
+            .select { CustomGoalsTable.id eq newId }
+            .map { it.toCustomGoalDto() }
+            .singleOrNull()
     }
 
     suspend fun updateProgress(userId: UUID, request: UpdateCustomGoalProgressRequest): CustomGoalDto? = dbQuery {
@@ -34,23 +37,19 @@ class CustomGoalRepository {
         val updated = CustomGoalsTable.update({ (CustomGoalsTable.id eq goalId) and (CustomGoalsTable.userId eq userId) }) {
             it[currentValue] = request.currentValue
         }
-        if (updated > 0) getGoalById(goalId) else null
+        if (updated > 0) {
+            CustomGoalsTable
+                .select { CustomGoalsTable.id eq goalId }
+                .map { it.toCustomGoalDto() }
+                .singleOrNull()
+        } else null
     }
 
     suspend fun getAllGoals(userId: UUID): List<CustomGoalDto> = dbQuery {
         CustomGoalsTable
-            .selectAll()
-            .where { CustomGoalsTable.userId eq userId }
+            .select { CustomGoalsTable.userId eq userId }
             .orderBy(CustomGoalsTable.createdAt to SortOrder.DESC)
             .map { it.toCustomGoalDto() }
-    }
-
-    private suspend fun getGoalById(id: UUID): CustomGoalDto? = dbQuery {
-        CustomGoalsTable
-            .selectAll()
-            .where { CustomGoalsTable.id eq id }
-            .map { it.toCustomGoalDto() }
-            .singleOrNull()
     }
 
     private fun ResultRow.toCustomGoalDto(): CustomGoalDto {

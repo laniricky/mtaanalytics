@@ -15,19 +15,18 @@ class EpisodeRepository {
 
     suspend fun recordEpisode(userId: UUID, request: RecordEpisodeRequest): EpisodeDto? = dbQuery {
         val existing = EpisodesTable
-            .selectAll()
-            .where { (EpisodesTable.userId eq userId) and (EpisodesTable.season eq request.season) and (EpisodesTable.episode eq request.episode) }
+            .select { (EpisodesTable.userId eq userId) and (EpisodesTable.season eq request.season) and (EpisodesTable.episode eq request.episode) }
             .singleOrNull()
+
+        val releaseDateInstant = Instant.ofEpochMilli(request.releaseDateEpochMillis).atZone(ZoneId.systemDefault()).toLocalDateTime()
 
         if (existing != null) {
             EpisodesTable.update({ EpisodesTable.id eq existing[EpisodesTable.id] }) {
-                it[releaseDate] = Instant.ofEpochMilli(request.releaseDateEpochMillis).atZone(ZoneId.systemDefault()).toLocalDateTime()
-                it[views] = request.views
-                it[revenue] = request.revenue
+                it[releaseDate] = releaseDateInstant
+                it[title] = request.title
+                it[totalViews] = request.totalViews
+                it[productionCost] = request.productionCost
                 it[watchTimeHours] = request.watchTimeHours
-                it[shares] = request.shares
-                it[comments] = request.comments
-                it[likes] = request.likes
             }
         } else {
             EpisodesTable.insert {
@@ -35,34 +34,26 @@ class EpisodeRepository {
                 it[this.userId] = userId
                 it[season] = request.season
                 it[episode] = request.episode
-                it[releaseDate] = Instant.ofEpochMilli(request.releaseDateEpochMillis).atZone(ZoneId.systemDefault()).toLocalDateTime()
-                it[views] = request.views
-                it[revenue] = request.revenue
+                it[releaseDate] = releaseDateInstant
+                it[title] = request.title
+                it[totalViews] = request.totalViews
+                it[productionCost] = request.productionCost
                 it[watchTimeHours] = request.watchTimeHours
-                it[shares] = request.shares
-                it[comments] = request.comments
-                it[likes] = request.likes
                 it[createdAt] = LocalDateTime.now()
             }
         }
 
-        getEpisode(userId, request.season, request.episode)
+        EpisodesTable
+            .select { (EpisodesTable.userId eq userId) and (EpisodesTable.season eq request.season) and (EpisodesTable.episode eq request.episode) }
+            .map { it.toEpisodeDto() }
+            .singleOrNull()
     }
 
     suspend fun getAllEpisodes(userId: UUID): List<EpisodeDto> = dbQuery {
         EpisodesTable
-            .selectAll()
-            .where { EpisodesTable.userId eq userId }
-            .orderBy(EpisodesTable.season to SortOrder.DESC, EpisodesTable.episode to SortOrder.DESC)
+            .select { EpisodesTable.userId eq userId }
+            .orderBy(EpisodesTable.releaseDate to SortOrder.DESC)
             .map { it.toEpisodeDto() }
-    }
-
-    private suspend fun getEpisode(userId: UUID, season: Int, episode: Int): EpisodeDto? = dbQuery {
-        EpisodesTable
-            .selectAll()
-            .where { (EpisodesTable.userId eq userId) and (EpisodesTable.season eq season) and (EpisodesTable.episode eq episode) }
-            .map { it.toEpisodeDto() }
-            .singleOrNull()
     }
 
     private fun ResultRow.toEpisodeDto(): EpisodeDto {

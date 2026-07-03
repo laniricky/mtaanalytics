@@ -13,8 +13,7 @@ class UploadRepository {
 
     suspend fun recordUploads(userId: UUID, request: RecordUploadsRequest): UploadsEntryDto? = dbQuery {
         val existing = UploadsTable
-            .selectAll()
-            .where { (UploadsTable.userId eq userId) and (UploadsTable.weekStartDate eq request.weekStartDate) }
+            .select { (UploadsTable.userId eq userId) and (UploadsTable.weekStartDate eq request.weekStartDate) }
             .singleOrNull()
 
         if (existing != null) {
@@ -37,23 +36,17 @@ class UploadRepository {
             }
         }
 
-        getUploadsByWeek(userId, request.weekStartDate)
+        UploadsTable
+            .select { (UploadsTable.userId eq userId) and (UploadsTable.weekStartDate eq request.weekStartDate) }
+            .map { it.toUploadsEntryDto() }
+            .singleOrNull()
     }
 
     suspend fun getAllUploads(userId: UUID): List<UploadsEntryDto> = dbQuery {
         UploadsTable
-            .selectAll()
-            .where { UploadsTable.userId eq userId }
+            .select { UploadsTable.userId eq userId }
             .orderBy(UploadsTable.weekStartDate to SortOrder.DESC)
             .map { it.toUploadsEntryDto() }
-    }
-
-    private suspend fun getUploadsByWeek(userId: UUID, weekStartDate: String): UploadsEntryDto? = dbQuery {
-        UploadsTable
-            .selectAll()
-            .where { (UploadsTable.userId eq userId) and (UploadsTable.weekStartDate eq weekStartDate) }
-            .map { it.toUploadsEntryDto() }
-            .singleOrNull()
     }
 
     private fun ResultRow.toUploadsEntryDto(): UploadsEntryDto {

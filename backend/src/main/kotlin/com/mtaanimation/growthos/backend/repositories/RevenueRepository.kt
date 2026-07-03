@@ -13,8 +13,7 @@ class RevenueRepository {
 
     suspend fun recordRevenue(userId: UUID, request: RecordRevenueRequest): RevenueEntryDto? = dbQuery {
         val existing = RevenueTable
-            .selectAll()
-            .where { (RevenueTable.userId eq userId) and (RevenueTable.monthYear eq request.monthYear) }
+            .select { (RevenueTable.userId eq userId) and (RevenueTable.monthYear eq request.monthYear) }
             .singleOrNull()
 
         if (existing != null) {
@@ -45,23 +44,17 @@ class RevenueRepository {
             }
         }
 
-        getRevenueByMonth(userId, request.monthYear)
+        RevenueTable
+            .select { (RevenueTable.userId eq userId) and (RevenueTable.monthYear eq request.monthYear) }
+            .map { it.toRevenueEntryDto() }
+            .singleOrNull()
     }
 
     suspend fun getAllRevenue(userId: UUID): List<RevenueEntryDto> = dbQuery {
         RevenueTable
-            .selectAll()
-            .where { RevenueTable.userId eq userId }
+            .select { RevenueTable.userId eq userId }
             .orderBy(RevenueTable.monthYear to SortOrder.DESC)
             .map { it.toRevenueEntryDto() }
-    }
-
-    private suspend fun getRevenueByMonth(userId: UUID, monthYear: String): RevenueEntryDto? = dbQuery {
-        RevenueTable
-            .selectAll()
-            .where { (RevenueTable.userId eq userId) and (RevenueTable.monthYear eq monthYear) }
-            .map { it.toRevenueEntryDto() }
-            .singleOrNull()
     }
 
     private fun ResultRow.toRevenueEntryDto(): RevenueEntryDto {

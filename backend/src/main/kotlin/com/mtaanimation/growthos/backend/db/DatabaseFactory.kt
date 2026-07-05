@@ -10,10 +10,18 @@ import kotlinx.coroutines.withContext
 
 object DatabaseFactory {
     fun init(url: String, user: String, pass: String) {
+        // Neon's pooler (PgBouncer in transaction mode) is incompatible with Flyway DDL.
+        // Strip "-pooler" from the host to get a direct connection for migrations.
+        val directUrl = url.replace("-pooler", "")
+        val sslDirectUrl = if (directUrl.contains("sslmode")) directUrl else "$directUrl?sslmode=require"
+
+        runFlyway(sslDirectUrl, user, pass)
+
+        // HikariCP app pool can use the pooler URL for better connection efficiency
+        val appUrl = if (url.contains("sslmode")) url else "$url?sslmode=require"
         val config = HikariConfig().apply {
             driverClassName = "org.postgresql.Driver"
-            // Neon requires SSL — append if not already present
-            jdbcUrl = if (url.contains("sslmode")) url else "$url?sslmode=require"
+            jdbcUrl = appUrl
             username = user
             password = pass
             maximumPoolSize = 3
@@ -21,18 +29,17 @@ object DatabaseFactory {
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             validate()
         }
-        val dataSource = HikariDataSource(config)
-        runFlyway(dataSource)
-        Database.connect(dataSource)
+        Database.connect(HikariDataSource(config))
     }
 
-    private fun runFlyway(dataSource: javax.sql.DataSource) {
-        val flyway = Flyway.configure().dataSource(dataSource).load()
+    private fun runFlyway(directUrl: String, user: String, pass: String) {
+        val flyway = Flyway.configure()
+            .dataSource(directUrl, user, pass)
+            .load()
         try {
-            flyway.info()
             flyway.migrate()
         } catch (e: Exception) {
-            println("Exception running flyway migration: \${e.message}")
+            println("Flyway migration error: ${e.message}")
             throw e
         }
     }

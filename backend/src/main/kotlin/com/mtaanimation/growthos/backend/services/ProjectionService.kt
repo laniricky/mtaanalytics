@@ -44,8 +44,10 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         val combinedTarget = latestPerPlatform.values.sumOf { it.target2036 }
 
         val nowInstant = Instant.now()
-        val remainingMonths = ChronoUnit.MONTHS.between(nowInstant, deadline).coerceAtLeast(1)
-        val remainingDays = ChronoUnit.DAYS.between(nowInstant, deadline).coerceAtLeast(1)
+        val nowZoned = nowInstant.atZone(ZoneOffset.UTC)
+        val deadlineZoned = deadline.atZone(ZoneOffset.UTC)
+        val remainingMonths = ChronoUnit.MONTHS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
+        val remainingDays = ChronoUnit.DAYS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
 
         val remainingFollowers = (combinedTarget - combinedCurrent).coerceAtLeast(0)
         val percentageComplete = if (combinedTarget > 0) (combinedCurrent.toDouble() / combinedTarget) * 100.0 else 0.0
@@ -98,10 +100,12 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         deadline: Instant,
         nowInstant: Instant
     ): PlatformProjection {
-        val remainingMonths = ChronoUnit.MONTHS.between(nowInstant, deadline).coerceAtLeast(1)
-        val remainingDays = ChronoUnit.DAYS.between(nowInstant, deadline).coerceAtLeast(1)
-        val remainingWeeks = ChronoUnit.WEEKS.between(nowInstant, deadline).coerceAtLeast(1)
-        val remainingYears = ChronoUnit.YEARS.between(nowInstant, deadline).coerceAtLeast(1)
+        val nowZoned = nowInstant.atZone(ZoneOffset.UTC)
+        val deadlineZoned = deadline.atZone(ZoneOffset.UTC)
+        val remainingMonths = ChronoUnit.MONTHS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
+        val remainingDays = ChronoUnit.DAYS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
+        val remainingWeeks = ChronoUnit.WEEKS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
+        val remainingYears = ChronoUnit.YEARS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
 
         val remaining = (latestStats.target2036 - latestStats.currentFollowers).coerceAtLeast(0)
 

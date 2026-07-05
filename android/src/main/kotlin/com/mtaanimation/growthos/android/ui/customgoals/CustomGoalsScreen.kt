@@ -81,7 +81,7 @@ fun CustomGoalsScreen(
             AnimatedContent(
                 targetState = uiState,
                 transitionSpec = { fadeIn(tween(400)) togetherWith fadeOut(tween(200)) },
-                label = "goals_content"
+                label = "milestones_content"
             ) { state ->
                 when (state) {
                     is CustomGoalsUiState.Loading -> LoadingState()

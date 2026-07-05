@@ -1,6 +1,7 @@
 package com.mtaanimation.growthos.android.ui.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Dashboard
@@ -29,8 +30,8 @@ fun AppBottomNavBar(navController: NavController) {
 
     val items = listOf(
         NavItem("Dashboard", Icons.Default.Dashboard, Screen.Dashboard),
-        NavItem("Platforms", Icons.Default.BarChart, Screen.Platforms),
-        NavItem("Goals", Icons.Default.Flag, Screen.CustomGoals),
+        NavItem("Check-In", Icons.Default.Add, Screen.LogStats),
+        NavItem("Milestones", Icons.Default.Flag, Screen.CustomGoals),
         NavItem("Revenue", Icons.Default.AttachMoney, Screen.Revenue),
         NavItem("Settings", Icons.Default.Settings, Screen.Settings)
     )

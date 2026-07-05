@@ -28,6 +28,22 @@ class GoalsViewModel @Inject constructor(
     private val _submitState = MutableStateFlow<TrackingSubmitState>(TrackingSubmitState.Idle)
     val submitState: StateFlow<TrackingSubmitState> = _submitState.asStateFlow()
 
+    private val _dashboardState = MutableStateFlow<com.mtaanimation.growthos.shared.projection.DashboardProjection?>(null)
+    val dashboardState: StateFlow<com.mtaanimation.growthos.shared.projection.DashboardProjection?> = _dashboardState.asStateFlow()
+
+    init {
+        fetchDashboard()
+    }
+
+    private fun fetchDashboard() {
+        viewModelScope.launch {
+            val result = dashboardRepository.getDashboard()
+            if (result.isSuccess) {
+                _dashboardState.value = result.getOrNull()
+            }
+        }
+    }
+
     fun recordWeeklyStats(
         platformType: String,
         currentFollowers: Long,
@@ -48,6 +64,8 @@ class GoalsViewModel @Inject constructor(
                 _submitState.value = TrackingSubmitState.Success
                 // Invalidate dashboard cache so the next load shows fresh delta analytics
                 dashboardRepository.invalidateCache()
+                // Refresh dashboard state for the Goals screen
+                fetchDashboard()
             } else {
                 _submitState.value = TrackingSubmitState.Error(
                     result.exceptionOrNull()?.message ?: "Unknown error recording stats"

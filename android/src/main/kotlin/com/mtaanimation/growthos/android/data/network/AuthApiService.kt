@@ -8,8 +8,10 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,33 +26,47 @@ class AuthApiService @Inject constructor(
     private val authDataStore: AuthDataStore
 ) {
     companion object {
-        const val BASE_URL = "https://mtaanalytics.onrender.com" // Production backend
+        const val BASE_URL = "https://mtaanalytics.onrender.com"
     }
 
     /**
      * Registers a new account. On success, persists the returned JWT token.
+     * Checks HTTP status before attempting JSON deserialization to avoid
+     * NoTransformationFoundException on error responses.
      */
     suspend fun register(username: String, email: String, password: String): Result<AuthToken> =
         runCatching {
-            val response: AuthToken = client.post("$BASE_URL/api/auth/register") {
+            val response = client.post("$BASE_URL/api/auth/register") {
                 contentType(ContentType.Application.Json)
                 setBody(RegisterRequest(username, email, password.sha256()))
-            }.body()
-            authDataStore.saveToken(response.token)
-            response
+            }
+            if (!response.status.isSuccess()) {
+                val errorText = response.bodyAsText()
+                error("Registration failed (${response.status.value}): $errorText")
+            }
+            val token: AuthToken = response.body()
+            authDataStore.saveToken(token.token)
+            token
         }
 
     /**
      * Logs in an existing account. On success, persists the returned JWT token.
+     * Checks HTTP status before attempting JSON deserialization to avoid
+     * NoTransformationFoundException on error responses.
      */
     suspend fun login(username: String, password: String): Result<AuthToken> =
         runCatching {
-            val response: AuthToken = client.post("$BASE_URL/api/auth/login") {
+            val response = client.post("$BASE_URL/api/auth/login") {
                 contentType(ContentType.Application.Json)
                 setBody(LoginRequest(username, password.sha256()))
-            }.body()
-            authDataStore.saveToken(response.token)
-            response
+            }
+            if (!response.status.isSuccess()) {
+                val errorText = response.bodyAsText()
+                error("Login failed (${response.status.value}): $errorText")
+            }
+            val token: AuthToken = response.body()
+            authDataStore.saveToken(token.token)
+            token
         }
 
     /**
@@ -60,7 +76,7 @@ class AuthApiService @Inject constructor(
 
     private fun String.sha256(): String {
         val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(this.toByteArray())
-        return bytes.joinToString("") { 
+        return bytes.joinToString("") {
             val hex = (it.toInt() and 0xFF).toString(16)
             if (hex.length == 1) "0$hex" else hex
         }

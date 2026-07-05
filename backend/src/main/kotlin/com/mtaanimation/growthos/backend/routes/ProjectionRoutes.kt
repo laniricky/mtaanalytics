@@ -3,6 +3,7 @@ package com.mtaanimation.growthos.backend.routes
 import com.mtaanimation.growthos.backend.repositories.UserRepository
 import com.mtaanimation.growthos.backend.services.ProjectionService
 import com.mtaanimation.growthos.shared.projection.ProjectionRequest
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
@@ -10,6 +11,7 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route

@@ -46,9 +46,12 @@ class MainActivity : ComponentActivity() {
                     var isReady by remember { mutableStateOf(false) }
                     var startDest by remember { mutableStateOf(Screen.Login.route) }
 
+                    // Observe token flow: navigate to Login whenever token disappears (logout or 401)
+                    val token by authDataStore.tokenFlow.collectAsState(initial = null)
+
                     LaunchedEffect(Unit) {
-                        val token = authDataStore.tokenFlow.first()
-                        if (token != null) {
+                        val initialToken = authDataStore.tokenFlow.first()
+                        if (initialToken != null) {
                             startDest = Screen.Dashboard.route
                         }
                         isReady = true

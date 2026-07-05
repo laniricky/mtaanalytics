@@ -11,7 +11,7 @@ fun Application.configureSecurity() {
     install(Authentication) {
         jwt("auth-jwt") {
             realm = JwtConfig.realm
-            verifier(JwtConfig.verifier)
+            verifier(JwtConfig.buildVerifier())
             validate { credential ->
                 if (credential.payload.getClaim("username").asString() != "") {
                     JWTPrincipal(credential.payload)

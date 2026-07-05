@@ -12,7 +12,8 @@ object DatabaseFactory {
     fun init(url: String, user: String, pass: String) {
         val config = HikariConfig().apply {
             driverClassName = "org.postgresql.Driver"
-            jdbcUrl = url
+            // Neon requires SSL — append if not already present
+            jdbcUrl = if (url.contains("sslmode")) url else "$url?sslmode=require"
             username = user
             password = pass
             maximumPoolSize = 3

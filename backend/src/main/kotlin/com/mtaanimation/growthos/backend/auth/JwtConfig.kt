@@ -5,12 +5,14 @@ import com.auth0.jwt.algorithms.Algorithm
 import java.util.Date
 
 object JwtConfig {
-    private const val secret = "secret-key-change-in-production"
-    private const val issuer = "https://jwt-provider-domain/"
-    const val audience = "jwt-audience"
+    // Populated at startup from application.conf / env vars
+    lateinit var secret: String
+    lateinit var issuer: String
+    lateinit var audience: String
     const val realm = "mtaanimation-growthos"
 
-    private const val validityInMs = 36_000_00 * 24 // 24 hours
+    // 30 days in milliseconds — avoids daily logouts
+    private const val validityInMs = 30L * 24 * 60 * 60 * 1000
 
     fun generateToken(username: String): String = JWT.create()
         .withAudience(audience)
@@ -18,8 +20,8 @@ object JwtConfig {
         .withClaim("username", username)
         .withExpiresAt(Date(System.currentTimeMillis() + validityInMs))
         .sign(Algorithm.HMAC256(secret))
-        
-    val verifier = JWT
+
+    fun buildVerifier() = JWT
         .require(Algorithm.HMAC256(secret))
         .withAudience(audience)
         .withIssuer(issuer)

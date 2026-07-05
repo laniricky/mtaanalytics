@@ -269,7 +269,7 @@ private fun DashboardBottomBar(navController: NavController) {
     val items = listOf(
         NavItem("Dashboard", Icons.Default.Dashboard, Screen.Dashboard),
         NavItem("Platforms", Icons.Default.BarChart, Screen.Platforms),
-        NavItem("Custom Goals", Icons.Default.Flag, Screen.CustomGoals),
+        NavItem("Goals", Icons.Default.Flag, Screen.CustomGoals),
         NavItem("Revenue", Icons.Default.AttachMoney, Screen.Revenue),
         NavItem("Settings", Icons.Default.Settings, Screen.Settings)
     )

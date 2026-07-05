@@ -13,6 +13,7 @@ import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.roundToLong
 
 /**
@@ -20,6 +21,8 @@ import kotlin.math.roundToLong
  *
  * DESIGN DECISIONS:
  * - All projections are calculated at request time from raw data. Nothing is hardcoded.
+ * - Projection curves follow a Normalized Logistic Function (S-curve) to model realistic 
+ *   creator audience growth (slow start, rapid acceleration, tapering near the end).
  * - If two or more historical monthly entries exist, we compute an actual monthly growth rate
  *   via linear regression to project the finish date.
  * - If fewer than 2 entries exist, status is UNKNOWN and projectedFinishDate is null.
@@ -52,8 +55,14 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         val remainingFollowers = (combinedTarget - combinedCurrent).coerceAtLeast(0)
         val percentageComplete = if (combinedTarget > 0) (combinedCurrent.toDouble() / combinedTarget) * 100.0 else 0.0
 
-        val requiredMonthlyGain = remainingFollowers / remainingMonths
-        val requiredDailyGain = remainingFollowers / remainingDays
+        val nextMonthProjection = calculateLogisticProjection(
+            currentFollowers = combinedCurrent,
+            targetFollowers = combinedTarget,
+            monthsElapsed = 1L,
+            totalMonths = remainingMonths
+        )
+        val requiredMonthlyGain = nextMonthProjection - combinedCurrent
+        val requiredDailyGain = (requiredMonthlyGain / 30.44).toLong()
 
         // Compute actual combined monthly growth rate using linear regression over history
         val combinedActualMonthlyRate = computeActualMonthlyRate(allStats)
@@ -103,16 +112,20 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         val nowZoned = nowInstant.atZone(ZoneOffset.UTC)
         val deadlineZoned = deadline.atZone(ZoneOffset.UTC)
         val remainingMonths = ChronoUnit.MONTHS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
-        val remainingDays = ChronoUnit.DAYS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
-        val remainingWeeks = ChronoUnit.WEEKS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
-        val remainingYears = ChronoUnit.YEARS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
 
         val remaining = (latestStats.target2036 - latestStats.currentFollowers).coerceAtLeast(0)
 
-        val requiredYearly = remaining / remainingYears
-        val requiredMonthly = remaining / remainingMonths
-        val requiredWeekly = remaining / remainingWeeks
-        val requiredDaily = remaining / remainingDays
+        val nextMonthProjection = calculateLogisticProjection(
+            currentFollowers = latestStats.currentFollowers,
+            targetFollowers = latestStats.target2036,
+            monthsElapsed = 1L,
+            totalMonths = remainingMonths
+        )
+
+        val requiredMonthly = nextMonthProjection - latestStats.currentFollowers
+        val requiredYearly = requiredMonthly * 12
+        val requiredWeekly = (requiredMonthly / 4.33).toLong()
+        val requiredDaily = (requiredMonthly / 30.44).toLong()
 
         val actualMonthlyRate = computeActualMonthlyRate(history)
 
@@ -123,10 +136,11 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
 
         val status = determineStatus(actualMonthlyRate, requiredMonthly.toDouble())
 
-        // Build monthly projection points from now to deadline
+        // Build monthly projection points from now to deadline using logistic curve
         val monthlyPoints = buildMonthlyPoints(
             currentFollowers = latestStats.currentFollowers,
-            requiredMonthlyGain = requiredMonthly,
+            targetFollowers = latestStats.target2036,
+            totalMonths = remainingMonths,
             history = history,
             nowInstant = nowInstant,
             deadline = deadline
@@ -148,12 +162,13 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
 
     /**
      * Builds a list of monthly ProjectionPoints from the earliest historical entry to the deadline.
-     * Each point carries both a projected value (linear interpolation from current) and any
-     * actual recorded value for that month.
+     * Each point carries both a projected value (logistic interpolation from current to target)
+     * and any actual recorded value for that month.
      */
     private fun buildMonthlyPoints(
         currentFollowers: Long,
-        requiredMonthlyGain: Long,
+        targetFollowers: Long,
+        totalMonths: Long,
         history: List<PlatformStats>,
         nowInstant: Instant,
         deadline: Instant
@@ -172,7 +187,14 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         var monthOffset = 0L
         while (!cursor.isAfter(endDate)) {
             val pointInstant = cursor.atStartOfDay().toInstant(ZoneOffset.UTC)
-            val projectedValue = currentFollowers + (requiredMonthlyGain * monthOffset)
+            
+            val projectedValue = calculateLogisticProjection(
+                currentFollowers = currentFollowers,
+                targetFollowers = targetFollowers,
+                monthsElapsed = monthOffset,
+                totalMonths = totalMonths
+            )
+            
             val key = "${cursor.year}-${cursor.monthValue}"
             val actualValue = actualByYearMonth[key]
 
@@ -238,4 +260,37 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         stats
             .groupBy { it.platformType }
             .mapValues { (_, entries) -> entries.maxByOrNull { it.dateRecordedEpochMillis }!! }
+
+    /**
+     * Calculates the projected follower count using a Normalized Logistic Function (S-curve).
+     * This models realistic audience growth: slow initially, rapid acceleration in the middle,
+     * and tapering off as it approaches the final target.
+     */
+    private fun calculateLogisticProjection(
+        currentFollowers: Long,
+        targetFollowers: Long,
+        monthsElapsed: Long,
+        totalMonths: Long
+    ): Long {
+        if (totalMonths <= 0) return targetFollowers
+        if (monthsElapsed <= 0) return currentFollowers
+        if (monthsElapsed >= totalMonths) return targetFollowers
+
+        val t = monthsElapsed.toDouble() / totalMonths.toDouble()
+        
+        // k defines steepness (acceleration). t0 is the midpoint (inflection).
+        val k = 10.0
+        val t0 = 0.7 
+
+        fun s(x: Double): Double = 1.0 / (1.0 + exp(-k * (x - t0)))
+
+        val s0 = s(0.0)
+        val s1 = s(1.0)
+        val st = s(t)
+
+        val sNorm = (st - s0) / (s1 - s0)
+        
+        val projected = currentFollowers + (targetFollowers - currentFollowers) * sNorm
+        return projected.roundToLong()
+    }
 }

@@ -8,8 +8,10 @@ import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,10 +35,17 @@ class DashboardApiService @Inject constructor(
         val token = authDataStore.tokenFlow.first()
             ?: error("Not authenticated")
 
-        client.post("$BASE_URL/api/projections/dashboard") {
+        val response = client.post("$BASE_URL/api/projections/dashboard") {
             contentType(ContentType.Application.Json)
             bearerAuth(token)
             setBody(ProjectionRequest(deadlineEpochMillis = deadlineEpochMillis))
-        }.body()
+        }
+
+        if (!response.status.isSuccess()) {
+            val errorText = response.bodyAsText()
+            error("Dashboard fetch failed (${response.status.value}): $errorText")
+        }
+
+        response.body()
     }
 }

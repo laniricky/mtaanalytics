@@ -37,13 +37,19 @@ fun Route.projectionRoutes(projectionService: ProjectionService, userRepository:
                 val request = call.receiveNullable<ProjectionRequest>()
                 val deadline = request?.deadlineEpochMillis?.let { Instant.ofEpochMilli(it) }
 
-                val dashboard = if (deadline != null) {
-                    projectionService.computeDashboard(UUID.fromString(user.id), deadline)
-                } else {
-                    projectionService.computeDashboard(UUID.fromString(user.id))
-                }
+                try {
+                    val dashboard = if (deadline != null) {
+                        projectionService.computeDashboard(UUID.fromString(user.id), deadline)
+                    } else {
+                        projectionService.computeDashboard(UUID.fromString(user.id))
+                    }
 
-                call.respond(HttpStatusCode.OK, dashboard)
+                    call.respond(HttpStatusCode.OK, dashboard)
+                } catch (e: Exception) {
+                    println("ERROR computing dashboard: ${e.message}")
+                    e.printStackTrace()
+                    call.respond(HttpStatusCode.InternalServerError, "Failed to compute dashboard: ${e.message}")
+                }
             }
         }
     }

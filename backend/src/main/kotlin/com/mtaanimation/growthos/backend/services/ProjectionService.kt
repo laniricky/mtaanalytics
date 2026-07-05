@@ -233,5 +233,5 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
     private fun latestStatsPerPlatform(stats: List<PlatformStats>): Map<PlatformType, PlatformStats> =
         stats
             .groupBy { it.platformType }
-            .mapValues { (_, entries) -> entries.maxBy { it.dateRecordedEpochMillis } }
+            .mapValues { (_, entries) -> entries.maxByOrNull { it.dateRecordedEpochMillis }!! }
 }

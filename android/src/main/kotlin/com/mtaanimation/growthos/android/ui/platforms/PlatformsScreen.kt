@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -20,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.mtaanimation.growthos.android.ui.navigation.Screen
 import com.mtaanimation.growthos.android.ui.dashboard.components.MetricCard
 import com.mtaanimation.growthos.android.ui.dashboard.components.StatusBadge
 import com.mtaanimation.growthos.android.ui.navigation.AppBottomNavBar
@@ -74,7 +77,13 @@ fun PlatformsScreen(
                 when (state) {
                     is PlatformsUiState.Loading -> LoadingState()
                     is PlatformsUiState.Error -> ErrorState(state.message) { viewModel.loadData() }
-                    is PlatformsUiState.Success -> PlatformsContent(state.platforms)
+                    is PlatformsUiState.Success -> {
+                        if (state.platforms.isEmpty()) {
+                            EmptyState { navController.navigate(Screen.LogStats.route) }
+                        } else {
+                            PlatformsContent(state.platforms)
+                        }
+                    }
                 }
             }
         }
@@ -193,6 +202,41 @@ private fun PlatformDetailCard(detail: PlatformDetailState) {
                     text = "Not enough data for chart (need at least 2 entries)",
                     style = MaterialTheme.typography.labelMedium.copy(color = BrandMuted)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyState(onLogStats: () -> Unit) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(32.dp)
+        ) {
+            Icon(
+                Icons.Default.BarChart,
+                contentDescription = null,
+                tint = BrandOrange.copy(alpha = 0.5f),
+                modifier = Modifier.size(64.dp)
+            )
+            Text(
+                "No platform data yet",
+                style = MaterialTheme.typography.titleMedium.copy(color = BrandWhite)
+            )
+            Text(
+                "Log your monthly stats to see projections for your platforms.",
+                style = MaterialTheme.typography.bodyMedium.copy(color = BrandMuted),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Button(
+                onClick = onLogStats,
+                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Log Stats", color = BrandCharcoal, fontWeight = FontWeight.Bold)
             }
         }
     }

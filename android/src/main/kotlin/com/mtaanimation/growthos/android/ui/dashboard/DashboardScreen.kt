@@ -78,6 +78,15 @@ fun DashboardScreen(
             )
         },
         bottomBar = { AppBottomNavBar(navController) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate(Screen.LogStats.route) },
+                containerColor = BrandOrange,
+                contentColor = BrandCharcoal
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Log Stats")
+            }
+        },
         containerColor = BrandCharcoal
     ) { paddingValues ->
         Box(

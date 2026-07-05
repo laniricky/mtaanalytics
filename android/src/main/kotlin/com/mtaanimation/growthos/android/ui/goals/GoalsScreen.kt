@@ -33,14 +33,12 @@ fun GoalsScreen(
 
     var selectedPlatform by remember { mutableStateOf("YOUTUBE") }
     var currentFollowersInput by remember { mutableStateOf("") }
-    var target2036Input by remember { mutableStateOf("") }
-    
+
     val platforms = listOf("YOUTUBE", "TIKTOK", "FACEBOOK", "INSTAGRAM", "X")
 
     LaunchedEffect(submitState) {
         if (submitState is TrackingSubmitState.Success) {
             currentFollowersInput = ""
-            // Keep target the same for convenience
             kotlinx.coroutines.delay(2000)
             viewModel.resetState()
         }
@@ -49,7 +47,7 @@ fun GoalsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Log Monthly Stats", color = BrandWhite) },
+                title = { Text("Log Weekly Stats", color = BrandWhite) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandCharcoal)
             )
         },
@@ -64,10 +62,20 @@ fun GoalsScreen(
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text(
-                text = "Enter your follower counts for the current month. These data points build your historical charts and drive the projection engine.",
-                style = MaterialTheme.typography.bodyMedium.copy(color = BrandMuted)
-            )
+            // Header info
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Weekly Check-In",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = BrandWhite
+                    )
+                )
+                Text(
+                    text = "Log your current follower count at the end of each week. The app will compare your progress against the S-Curve milestone target for today.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = BrandMuted)
+                )
+            }
 
             // Platform Selector
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -100,11 +108,12 @@ fun GoalsScreen(
                 }
             }
 
-            // Inputs
+            // Only current followers input — target is fixed in the backend
             OutlinedTextField(
                 value = currentFollowersInput,
                 onValueChange = { if (it.all { char -> char.isDigit() }) currentFollowersInput = it },
-                label = { Text("Current Followers (End of Month)") },
+                label = { Text("Current Followers / Subscribers") },
+                placeholder = { Text("e.g. 12500", color = BrandMuted) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -115,23 +124,6 @@ fun GoalsScreen(
                 ),
                 singleLine = true
             )
-
-            OutlinedTextField(
-                value = target2036Input,
-                onValueChange = { if (it.all { char -> char.isDigit() }) target2036Input = it },
-                label = { Text("2036 Target for $selectedPlatform") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BrandOrange,
-                    focusedLabelColor = BrandOrange,
-                    unfocusedBorderColor = BrandDivider,
-                    unfocusedLabelColor = BrandMuted
-                ),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
 
             // Status message
             when (val state = submitState) {
@@ -150,25 +142,25 @@ fun GoalsScreen(
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, tint = BrandAhead)
-                        Text("Stats recorded successfully", color = BrandAhead)
+                        Text("Stats recorded! Dashboard updated.", color = BrandAhead)
                     }
                 }
                 else -> {}
             }
 
+            Spacer(modifier = Modifier.weight(1f))
+
             // Submit Button
             Button(
                 onClick = {
                     val followers = currentFollowersInput.toLongOrNull() ?: 0L
-                    val target = target2036Input.toLongOrNull() ?: 0L
-                    viewModel.recordMonthlyStats(
+                    viewModel.recordWeeklyStats(
                         platformType = selectedPlatform,
                         currentFollowers = followers,
-                        target2036 = target,
                         dateEpochMillis = Instant.now().toEpochMilli()
                     )
                 },
-                enabled = currentFollowersInput.isNotEmpty() && target2036Input.isNotEmpty() && submitState !is TrackingSubmitState.Submitting,
+                enabled = currentFollowersInput.isNotEmpty() && submitState !is TrackingSubmitState.Submitting,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -179,7 +171,7 @@ fun GoalsScreen(
                     CircularProgressIndicator(color = BrandCharcoal, modifier = Modifier.size(24.dp))
                 } else {
                     Text(
-                        "Record Monthly Stats",
+                        "Save Weekly Stats",
                         color = BrandCharcoal,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium

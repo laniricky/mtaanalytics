@@ -1,5 +1,6 @@
 package com.mtaanimation.growthos.backend.repositories
 
+import com.mtaanimation.growthos.backend.constants.GrowthConstants
 import com.mtaanimation.growthos.backend.db.DatabaseFactory.dbQuery
 import com.mtaanimation.growthos.backend.db.tables.PlatformStatsTable
 import com.mtaanimation.growthos.shared.models.PlatformStats
@@ -12,13 +13,14 @@ import java.util.UUID
 
 class PlatformStatsRepository {
 
-    suspend fun recordStats(userId: UUID, platformType: PlatformType, currentFollowers: Long, target2036: Long, dateRecorded: Instant): PlatformStats? = dbQuery {
+    suspend fun recordStats(userId: UUID, platformType: PlatformType, currentFollowers: Long, dateRecorded: Instant): PlatformStats? = dbQuery {
+        val target = GrowthConstants.GOALS[platformType]?.target ?: 0L
         val insertStatement = PlatformStatsTable.insert {
             it[id] = UUID.randomUUID()
             it[PlatformStatsTable.userId] = userId
             it[PlatformStatsTable.platformType] = platformType.name
             it[PlatformStatsTable.currentFollowers] = currentFollowers
-            it[PlatformStatsTable.target2036] = target2036
+            it[PlatformStatsTable.target2036] = target
             it[PlatformStatsTable.dateRecorded] = dateRecorded
         }
         insertStatement.resultedValues?.singleOrNull()?.let(::resultRowToPlatformStats)
@@ -38,3 +40,4 @@ class PlatformStatsRepository {
             dateRecordedEpochMillis = row[PlatformStatsTable.dateRecorded].toEpochMilli()
         )
 }
+

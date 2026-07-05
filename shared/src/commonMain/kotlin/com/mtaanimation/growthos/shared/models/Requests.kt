@@ -14,6 +14,5 @@ data class CreateGoalRequest(
 data class RecordStatsRequest(
     val platformType: PlatformType,
     val currentFollowers: Long,
-    val target2036: Long,
     val dateRecordedEpochMillis: Long
 )

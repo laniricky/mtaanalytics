@@ -17,6 +17,8 @@ import com.mtaanimation.growthos.android.ui.theme.BrandMuted
 import com.mtaanimation.growthos.android.ui.theme.BrandSurface
 import com.mtaanimation.growthos.android.ui.theme.BrandGray
 import com.mtaanimation.growthos.android.ui.theme.BrandWhite
+import com.mtaanimation.growthos.android.ui.theme.BrandAhead
+import com.mtaanimation.growthos.android.ui.theme.BrandBehind
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -32,6 +34,8 @@ fun AudienceHeroBanner(
     remainingFollowers: Long,
     remainingMonths: Long,
     deadlineEpochMillis: Long,
+    combinedVarianceFollowers: Long = 0L,
+    combinedVariancePercentage: Double = 0.0,
     modifier: Modifier = Modifier
 ) {
     val deadlineDate = Instant.ofEpochMilli(deadlineEpochMillis)
@@ -100,6 +104,21 @@ fun AudienceHeroBanner(
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
+            }
+
+            // Combined delta row vs today's milestone
+            if (combinedVarianceFollowers != 0L) {
+                val deltaColor = if (combinedVarianceFollowers >= 0) BrandAhead else BrandBehind
+                val prefix = if (combinedVarianceFollowers >= 0) "+" else ""
+                val pctText = "$prefix${"%.1f".format(combinedVariancePercentage)}%"
+                val absText = "$prefix${combinedVarianceFollowers.formatLarge()}"
+                Text(
+                    text = "$pctText ($absText) vs milestone today",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = deltaColor,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
             }
         }
     }

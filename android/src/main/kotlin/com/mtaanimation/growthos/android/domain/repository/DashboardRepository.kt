@@ -15,4 +15,12 @@ class DashboardRepository @Inject constructor(
 ) {
     suspend fun getDashboard(deadlineOverrideEpochMillis: Long? = null): Result<DashboardProjection> =
         apiService.getDashboardProjection(deadlineOverrideEpochMillis)
+
+    /** Signal that the cached dashboard is stale and should be re-fetched on next load. */
+    fun invalidateCache() {
+        // Currently no local cache — dashboard is always fetched fresh from the API.
+        // This method exists so ViewModels can call it after writing new stats, ready
+        // for future caching (e.g. Room or DataStore) without changing call sites.
+    }
 }
+

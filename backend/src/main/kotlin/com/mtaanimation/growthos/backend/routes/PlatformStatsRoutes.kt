@@ -32,7 +32,6 @@ fun Route.platformStatsRoutes(platformStatsRepository: PlatformStatsRepository, 
                     userId = UUID.fromString(user.id),
                     platformType = request.platformType,
                     currentFollowers = request.currentFollowers,
-                    target2036 = request.target2036,
                     dateRecorded = dateRecorded
                 )
                 

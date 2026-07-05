@@ -36,7 +36,17 @@ data class PlatformProjection(
     /** Status based on actual vs. required growth rate. */
     val status: GrowthStatus,
     /** Monthly data points for the growth chart. */
-    val monthlyProjectionPoints: List<ProjectionPoint>
+    val monthlyProjectionPoints: List<ProjectionPoint>,
+
+    // --- Delta Analytics ---
+    /** Where the S-Curve milestone expected you to be today. */
+    val milestoneTargetFollowers: Long,
+    /** Actual followers minus milestone target. Positive = ahead, negative = behind. */
+    val varianceFollowers: Long,
+    /** Variance as a percentage of the milestone target. e.g., +5.2 or -2.1 */
+    val variancePercentage: Double,
+    /** Actual monthly growth rate computed from history. Null if insufficient data. */
+    val actualMonthlyGain: Double?
 )
 
 /**
@@ -56,7 +66,17 @@ data class DashboardProjection(
     /** Projected finish date at current rate (epoch ms), or null if insufficient data. */
     val projectedFinishDateEpochMillis: Long?,
     val status: GrowthStatus,
-    val platformProjections: List<PlatformProjection>
+    val platformProjections: List<PlatformProjection>,
+
+    // --- Combined Delta Analytics ---
+    /** Sum of all platform milestone targets for today. */
+    val combinedMilestoneTarget: Long,
+    /** Combined variance: actual combined - milestone target. */
+    val combinedVarianceFollowers: Long,
+    /** Combined variance as a percentage. */
+    val combinedVariancePercentage: Double,
+    /** Combined actual monthly growth rate from history. */
+    val combinedActualMonthlyGain: Double?
 )
 
 @Serializable

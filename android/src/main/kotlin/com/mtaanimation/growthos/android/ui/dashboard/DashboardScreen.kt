@@ -136,7 +136,9 @@ private fun DashboardContent(
                 combinedTarget = projection.combinedTarget,
                 remainingFollowers = projection.remainingFollowers,
                 remainingMonths = projection.remainingMonths,
-                deadlineEpochMillis = projection.deadlineEpochMillis
+                deadlineEpochMillis = projection.deadlineEpochMillis,
+                combinedVarianceFollowers = projection.combinedVarianceFollowers,
+                combinedVariancePercentage = projection.combinedVariancePercentage
             )
         }
 

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.mtaanimation.growthos.android.ui.navigation.AppBottomNavBar
 import com.mtaanimation.growthos.android.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,14 +29,10 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Settings", color = BrandWhite) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = BrandWhite)
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandCharcoal)
             )
         },
+        bottomBar = { AppBottomNavBar(navController) },
         containerColor = BrandCharcoal
     ) { paddingValues ->
         LazyColumn(

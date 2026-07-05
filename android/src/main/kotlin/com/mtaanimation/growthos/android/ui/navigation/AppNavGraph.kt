@@ -81,6 +81,8 @@ fun AppNavGraph(navController: NavHostController, startDestination: String = Scr
             com.mtaanimation.growthos.android.ui.customgoals.CustomGoalsScreen(navController = navController)
         }
 
-        composable(Screen.Settings.route)  { /* Future */ }
+        composable(Screen.Settings.route) {
+            com.mtaanimation.growthos.android.ui.settings.SettingsScreen(navController = navController)
+        }
     }
 }

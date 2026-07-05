@@ -7,7 +7,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.mtaanimation.growthos.android.ui.navigation.AppBottomNavBar
 import com.mtaanimation.growthos.android.ui.theme.*
 import java.time.Instant
 
@@ -50,14 +50,10 @@ fun GoalsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Log Monthly Stats", color = BrandWhite) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = BrandWhite)
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandCharcoal)
             )
         },
+        bottomBar = { AppBottomNavBar(navController) },
         containerColor = BrandCharcoal
     ) { paddingValues ->
         Column(

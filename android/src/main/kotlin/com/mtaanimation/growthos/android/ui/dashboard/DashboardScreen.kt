@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.mtaanimation.growthos.android.ui.dashboard.components.*
+import com.mtaanimation.growthos.android.ui.navigation.AppBottomNavBar
 import com.mtaanimation.growthos.android.ui.navigation.Screen
 import com.mtaanimation.growthos.android.ui.theme.*
 import com.mtaanimation.growthos.shared.projection.DashboardProjection
@@ -76,7 +77,7 @@ fun DashboardScreen(
                 )
             )
         },
-        bottomBar = { DashboardBottomBar(navController) },
+        bottomBar = { AppBottomNavBar(navController) },
         containerColor = BrandCharcoal
     ) { paddingValues ->
         Box(
@@ -262,48 +263,7 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
     }
 }
 
-@Composable
-private fun DashboardBottomBar(navController: NavController) {
-    data class NavItem(val label: String, val icon: ImageVector, val screen: Screen)
 
-    val items = listOf(
-        NavItem("Dashboard", Icons.Default.Dashboard, Screen.Dashboard),
-        NavItem("Platforms", Icons.Default.BarChart, Screen.Platforms),
-        NavItem("Goals", Icons.Default.Flag, Screen.CustomGoals),
-        NavItem("Revenue", Icons.Default.AttachMoney, Screen.Revenue),
-        NavItem("Settings", Icons.Default.Settings, Screen.Settings)
-    )
-
-    NavigationBar(containerColor = BrandSurface) {
-        val currentRoute = navController.currentDestination?.route
-        items.forEach { item ->
-            NavigationBarItem(
-                selected = currentRoute == item.screen.route,
-                onClick = {
-                    navController.navigate(item.screen.route) {
-                        popUpTo(Screen.Dashboard.route) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                icon = {
-                    Icon(item.icon, contentDescription = item.label,
-                        tint = if (currentRoute == item.screen.route) BrandOrange else BrandMuted)
-                },
-                label = {
-                    Text(
-                        item.label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (currentRoute == item.screen.route) BrandOrange else BrandMuted
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = BrandOrange.copy(alpha = 0.15f)
-                )
-            )
-        }
-    }
-}
 
 private fun Long.formatFollowers(): String = when {
     this >= 1_000_000 -> "%.2fM".format(this / 1_000_000.0)

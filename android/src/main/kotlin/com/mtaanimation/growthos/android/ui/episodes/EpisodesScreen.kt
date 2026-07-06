@@ -8,16 +8,22 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.mtaanimation.growthos.android.ui.navigation.AppBottomNavBar
@@ -157,61 +163,141 @@ fun CreateEpisodeDialog(
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-    AlertDialog(
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = sheetState,
         containerColor = BrandSurface,
-        title = {
-            Text("New Episode", style = MaterialTheme.typography.titleLarge.copy(color = BrandOrange, fontWeight = FontWeight.Bold))
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Episode Title", style = MaterialTheme.typography.labelSmall) },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = BrandWhite,
-                        unfocusedTextColor = BrandWhite,
-                        focusedBorderColor = BrandOrange,
-                        unfocusedBorderColor = BrandSurfaceVariant,
-                        focusedLabelColor = BrandOrange,
-                        unfocusedLabelColor = BrandMuted,
-                        cursorColor = BrandOrange
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description (Optional)", style = MaterialTheme.typography.labelSmall) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = BrandWhite,
-                        unfocusedTextColor = BrandWhite,
-                        focusedBorderColor = BrandOrange,
-                        unfocusedBorderColor = BrandSurfaceVariant,
-                        focusedLabelColor = BrandOrange,
-                        unfocusedLabelColor = BrandMuted,
-                        cursorColor = BrandOrange
-                    ),
-                    modifier = Modifier.fillMaxWidth().height(100.dp)
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(title, description.takeIf { it.isNotBlank() }) },
-                enabled = title.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
-            ) {
-                Text("Create", color = BrandCharcoal, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = BrandMuted) }
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 8.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(BrandSurfaceVariant)
+            )
         }
-    )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 48.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            // Icon + Header
+            Box(
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(BrandOrange.copy(alpha = 0.3f), BrandOrange.copy(alpha = 0.1f))
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Movie,
+                    contentDescription = null,
+                    tint = BrandOrange,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Text(
+                "New Episode",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    color = BrandWhite,
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+            Text(
+                "Give your episode a name and optional description.",
+                style = MaterialTheme.typography.bodySmall.copy(color = BrandMuted),
+                modifier = Modifier.padding(bottom = 28.dp)
+            )
+
+            // Title field
+            Text(
+                "EPISODE TITLE",
+                style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted, letterSpacing = 1.sp),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                placeholder = { Text("e.g. Ojode", color = BrandMuted) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    keyboardType = KeyboardType.Text
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = BrandWhite,
+                    unfocusedTextColor = BrandWhite,
+                    focusedBorderColor = BrandOrange,
+                    unfocusedBorderColor = BrandSurfaceVariant,
+                    cursorColor = BrandOrange
+                ),
+                textStyle = MaterialTheme.typography.titleMedium.copy(
+                    color = BrandWhite,
+                    fontWeight = FontWeight.SemiBold
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 20.dp)
+            )
+
+            // Description field
+            Text(
+                "DESCRIPTION  •  OPTIONAL",
+                style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted, letterSpacing = 1.sp),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                placeholder = { Text("What is this episode about?", color = BrandMuted) },
+                minLines = 3,
+                maxLines = 5,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = BrandWhite,
+                    unfocusedTextColor = BrandWhite,
+                    focusedBorderColor = BrandOrange,
+                    unfocusedBorderColor = BrandSurfaceVariant,
+                    cursorColor = BrandOrange
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+            )
+
+            // Save button
+            Button(
+                onClick = { onConfirm(title.trim(), description.trim().takeIf { it.isNotBlank() }) },
+                enabled = title.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
+            ) {
+                Text(
+                    "Create Episode",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        color = BrandCharcoal,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        }
+    }
 }
 
 private fun Long.fmtCompact(): String = when {

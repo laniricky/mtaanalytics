@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -292,49 +293,218 @@ private fun LogRevenueDialog(
     onDismiss: () -> Unit,
     onConfirm: (RecordRevenueRequest) -> Unit
 ) {
-    // Default to current month
-    val currentMonth = YearMonth.now().toString() // "2026-07"
+    val currentMonth = YearMonth.now().toString()
 
     var monthYear by remember { mutableStateOf(currentMonth) }
-    var youtube by remember { mutableStateOf("") }
-    var tiktok by remember { mutableStateOf("") }
+    var youtube  by remember { mutableStateOf("") }
+    var tiktok   by remember { mutableStateOf("") }
     var facebook by remember { mutableStateOf("") }
     var instagram by remember { mutableStateOf("") }
-    var sponsors by remember { mutableStateOf("") }
-    var merch by remember { mutableStateOf("") }
-    var website by remember { mutableStateOf("") }
-    var other by remember { mutableStateOf("") }
+    var sponsors  by remember { mutableStateOf("") }
+    var merch    by remember { mutableStateOf("") }
+    var website  by remember { mutableStateOf("") }
+    var other    by remember { mutableStateOf("") }
 
-    AlertDialog(
+    // Live running total
+    val liveTotal by remember {
+        derivedStateOf {
+            listOf(youtube, tiktok, facebook, instagram, sponsors, merch, website, other)
+                .sumOf { it.toDoubleOrNull() ?: 0.0 }
+        }
+    }
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = sheetState,
         containerColor = BrandSurface,
-        title = {
-            Text(
-                "Log Monthly Revenue",
-                style = MaterialTheme.typography.titleLarge.copy(color = BrandOrange, fontWeight = FontWeight.Bold)
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 8.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(BrandSurfaceVariant)
             )
-        },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 48.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                RevenueInputField("Month (YYYY-MM)", monthYear, false) { monthYear = it }
-                RevenueInputField("YouTube AdSense", youtube) { youtube = it }
-                RevenueInputField("TikTok Revenue", tiktok) { tiktok = it }
-                RevenueInputField("Facebook Revenue", facebook) { facebook = it }
-                RevenueInputField("Instagram Revenue", instagram) { instagram = it }
-                RevenueInputField("Sponsorships", sponsors) { sponsors = it }
-                RevenueInputField("Merchandise", merch) { merch = it }
-                RevenueInputField("Website / Courses", website) { website = it }
-                RevenueInputField("Other Income", other) { other = it }
-
-                if (submitState is RevenueSubmitState.Error) {
-                    Text(submitState.message, color = BrandBehind, style = MaterialTheme.typography.bodySmall)
+                Column {
+                    Text(
+                        "Log Revenue",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            color = BrandWhite,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Text(
+                        monthYear,
+                        style = MaterialTheme.typography.bodySmall.copy(color = BrandMuted)
+                    )
+                }
+                // Live total pill
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(BrandOnTrack.copy(alpha = 0.15f))
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        liveTotal.fmt(),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = BrandOnTrack,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                 }
             }
-        },
-        confirmButton = {
+
+            // Month selector row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(BrandSurfaceVariant.copy(alpha = 0.4f))
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "Month",
+                    style = MaterialTheme.typography.labelMedium.copy(color = BrandMuted)
+                )
+                OutlinedTextField(
+                    value = monthYear,
+                    onValueChange = { monthYear = it },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        color = BrandWhite,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = BrandWhite,
+                        unfocusedTextColor = BrandWhite,
+                        focusedBorderColor = BrandOrange,
+                        unfocusedBorderColor = BrandSurfaceVariant,
+                        cursorColor = BrandOrange
+                    ),
+                    modifier = Modifier.width(130.dp)
+                )
+            }
+
+            // Group: Platform Revenue
+            RevenueGroupHeader("PLATFORM REVENUE")
+            Spacer(Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                RevenueInputField(
+                    label = "YouTube",
+                    value = youtube,
+                    modifier = Modifier.weight(1f),
+                    onValue = { youtube = it }
+                )
+                RevenueInputField(
+                    label = "TikTok",
+                    value = tiktok,
+                    modifier = Modifier.weight(1f),
+                    onValue = { tiktok = it }
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                RevenueInputField(
+                    label = "Facebook",
+                    value = facebook,
+                    modifier = Modifier.weight(1f),
+                    onValue = { facebook = it }
+                )
+                RevenueInputField(
+                    label = "Instagram",
+                    value = instagram,
+                    modifier = Modifier.weight(1f),
+                    onValue = { instagram = it }
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // Group: Direct Income
+            RevenueGroupHeader("DIRECT INCOME")
+            Spacer(Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                RevenueInputField(
+                    label = "Sponsors",
+                    value = sponsors,
+                    modifier = Modifier.weight(1f),
+                    onValue = { sponsors = it }
+                )
+                RevenueInputField(
+                    label = "Merch",
+                    value = merch,
+                    modifier = Modifier.weight(1f),
+                    onValue = { merch = it }
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                RevenueInputField(
+                    label = "Website / Courses",
+                    value = website,
+                    modifier = Modifier.weight(1f),
+                    onValue = { website = it }
+                )
+                RevenueInputField(
+                    label = "Other",
+                    value = other,
+                    modifier = Modifier.weight(1f),
+                    onValue = { other = it }
+                )
+            }
+
+            if (submitState is RevenueSubmitState.Error) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    submitState.message,
+                    color = BrandBehind,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            Spacer(Modifier.height(32.dp))
+
+            // Save button
             Button(
                 onClick = {
                     onConfirm(
@@ -352,30 +522,53 @@ private fun LogRevenueDialog(
                     )
                 },
                 enabled = monthYear.isNotBlank() && submitState !is RevenueSubmitState.Submitting,
-                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
             ) {
                 if (submitState is RevenueSubmitState.Submitting) {
-                    CircularProgressIndicator(color = BrandCharcoal, modifier = Modifier.size(18.dp))
+                    CircularProgressIndicator(
+                        color = BrandCharcoal,
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.5.dp
+                    )
                 } else {
-                    Text("Save Revenue", color = BrandCharcoal, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Save Revenue",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            color = BrandCharcoal,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                 }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = BrandMuted) }
         }
+    }
+}
+
+@Composable
+private fun RevenueGroupHeader(title: String) {
+    Text(
+        title,
+        style = MaterialTheme.typography.labelSmall.copy(
+            color = BrandMuted,
+            letterSpacing = 1.5.sp
+        ),
+        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
     )
 }
 
 @Composable
-private fun RevenueInputField(label: String, value: String, isNumeric: Boolean = true, onValue: (String) -> Unit) {
+private fun RevenueInputField(label: String, value: String, isNumeric: Boolean = true, modifier: Modifier = Modifier, onValue: (String) -> Unit) {
     OutlinedTextField(
         value = value,
         onValueChange = onValue,
         label = { Text(label, style = MaterialTheme.typography.labelSmall) },
         singleLine = true,
         keyboardOptions = if (isNumeric) KeyboardOptions(keyboardType = KeyboardType.Decimal) else KeyboardOptions.Default,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = BrandWhite,
             unfocusedTextColor = BrandWhite,

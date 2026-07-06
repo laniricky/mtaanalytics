@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -98,6 +99,12 @@ fun EpisodesScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
+                            item {
+                                TotalViewsCard(
+                                    totalViews = state.episodes.sumOf { it.totalViews },
+                                    episodeCount = state.episodes.size
+                                )
+                            }
                             items(state.episodes) { episode ->
                                 EpisodeCard(
                                     episode = episode,
@@ -153,6 +160,76 @@ fun EpisodeCard(episode: EpisodeDto, onClick: () -> Unit) {
         }
     }
 }
+
+@Composable
+private fun TotalViewsCard(totalViews: Long, episodeCount: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        BrandOrange.copy(alpha = 0.18f),
+                        BrandOnTrack.copy(alpha = 0.10f)
+                    )
+                )
+            )
+            .padding(horizontal = 20.dp, vertical = 18.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(BrandOrange.copy(alpha = 0.20f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Visibility,
+                    contentDescription = null,
+                    tint = BrandOrange,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+            Column {
+                Text(
+                    "TOTAL VIEWS",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = BrandMuted,
+                        letterSpacing = 1.sp
+                    )
+                )
+                Text(
+                    totalViews.fmtCompact(),
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        color = BrandWhite,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                episodeCount.toString(),
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    color = BrandOnTrack,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                "Episodes",
+                style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted)
+            )
+        }
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

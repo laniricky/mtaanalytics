@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -31,9 +32,9 @@ fun AppBottomNavBar(navController: NavController) {
     val items = listOf(
         NavItem("Dashboard", Icons.Default.Dashboard, Screen.Dashboard),
         NavItem("Check-In", Icons.Default.Add, Screen.LogStats),
+        NavItem("Episodes", Icons.Default.PlayArrow, Screen.Episodes),
         NavItem("Milestones", Icons.Default.Flag, Screen.CustomGoals),
-        NavItem("Revenue", Icons.Default.AttachMoney, Screen.Revenue),
-        NavItem("Settings", Icons.Default.Settings, Screen.Settings)
+        NavItem("Revenue", Icons.Default.AttachMoney, Screen.Revenue)
     )
 
     NavigationBar(containerColor = BrandSurface) {

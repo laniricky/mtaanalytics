@@ -5,27 +5,32 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class EpisodeDto(
     val id: String,
-    val userId: String,
-    val season: Int,
-    val episode: Int,
-    val releaseDateEpochMillis: Long,
-    val views: Long,
-    val revenue: Double,
-    val watchTimeHours: Double,
-    val shares: Long,
-    val comments: Long,
-    val likes: Long
+    val title: String,
+    val description: String?,
+    val publishedAt: Long,
+    val totalViews: Long,
+    val links: List<EpisodeLinkDto>
 )
 
 @Serializable
-data class RecordEpisodeRequest(
-    val season: Int,
-    val episode: Int,
-    val releaseDateEpochMillis: Long,
-    val views: Long = 0,
-    val revenue: Double = 0.0,
-    val watchTimeHours: Double = 0.0,
-    val shares: Long = 0,
-    val comments: Long = 0,
-    val likes: Long = 0
+data class EpisodeLinkDto(
+    val id: String,
+    val platform: String,
+    val url: String?,
+    val viewCount: Long,
+    val updatedAt: Long
+)
+
+@Serializable
+data class CreateEpisodeRequest(
+    val title: String,
+    val description: String? = null,
+    val publishedAt: Long
+)
+
+@Serializable
+data class UpsertEpisodeLinkRequest(
+    val platform: String,
+    val url: String? = null,
+    val viewCount: Long
 )

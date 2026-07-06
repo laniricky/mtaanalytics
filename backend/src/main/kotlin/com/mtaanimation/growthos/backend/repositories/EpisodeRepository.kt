@@ -1,78 +1,114 @@
+
 package com.mtaanimation.growthos.backend.repositories
 
 import com.mtaanimation.growthos.backend.db.DatabaseFactory.dbQuery
 import com.mtaanimation.growthos.backend.database.EpisodesTable
-import com.mtaanimation.growthos.shared.models.episodes.EpisodeDto
-import com.mtaanimation.growthos.shared.models.episodes.RecordEpisodeRequest
+import com.mtaanimation.growthos.backend.database.EpisodeLinksTable
+import com.mtaanimation.growthos.shared.models.episodes.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.util.UUID
 
 class EpisodeRepository {
 
-    suspend fun recordEpisode(userId: UUID, request: RecordEpisodeRequest): EpisodeDto? = dbQuery {
-        val existing = EpisodesTable
-            .select { (EpisodesTable.userId eq userId) and (EpisodesTable.season eq request.season) and (EpisodesTable.episode eq request.episode) }
+    suspend fun createEpisode(userId: UUID, request: CreateEpisodeRequest): EpisodeDto? {
+        val newId = UUID.randomUUID()
+        dbQuery {
+            EpisodesTable.insert {
+                it[id] = newId
+                it[this.userId] = userId
+                it[title] = request.title
+                it[description] = request.description
+                it[publishedAt] = request.publishedAt
+                it[createdAt] = Instant.now().toEpochMilli()
+            }
+        }
+        return getEpisode(newId)
+    }
+
+    suspend fun upsertLink(episodeId: UUID, request: UpsertEpisodeLinkRequest): EpisodeLinkDto? = dbQuery {
+        val existing = EpisodeLinksTable
+            .select { (EpisodeLinksTable.episodeId eq episodeId) and (EpisodeLinksTable.platform eq request.platform) }
             .singleOrNull()
 
-        val releaseDateInstant = Instant.ofEpochMilli(request.releaseDateEpochMillis).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        val now = Instant.now().toEpochMilli()
 
         if (existing != null) {
-            EpisodesTable.update({ EpisodesTable.id eq existing[EpisodesTable.id] }) {
-                it[releaseDate] = releaseDateInstant
-                it[views] = request.views
-                it[revenue] = request.revenue
-                it[watchTimeHours] = request.watchTimeHours
-                it[shares] = request.shares
-                it[comments] = request.comments
-                it[likes] = request.likes
+            EpisodeLinksTable.update({ EpisodeLinksTable.id eq existing[EpisodeLinksTable.id] }) {
+                it[url] = request.url
+                it[viewCount] = request.viewCount
+                it[updatedAt] = now
             }
         } else {
-            EpisodesTable.insert {
+            EpisodeLinksTable.insert {
                 it[id] = UUID.randomUUID()
-                it[this.userId] = userId
-                it[season] = request.season
-                it[episode] = request.episode
-                it[releaseDate] = releaseDateInstant
-                it[views] = request.views
-                it[revenue] = request.revenue
-                it[watchTimeHours] = request.watchTimeHours
-                it[shares] = request.shares
-                it[comments] = request.comments
-                it[likes] = request.likes
-                it[createdAt] = LocalDateTime.now()
+                it[this.episodeId] = episodeId
+                it[platform] = request.platform
+                it[url] = request.url
+                it[viewCount] = request.viewCount
+                it[updatedAt] = now
             }
         }
 
-        EpisodesTable
-            .select { (EpisodesTable.userId eq userId) and (EpisodesTable.season eq request.season) and (EpisodesTable.episode eq request.episode) }
-            .map { it.toEpisodeDto() }
-            .singleOrNull()
+        EpisodeLinksTable
+            .select { (EpisodeLinksTable.episodeId eq episodeId) and (EpisodeLinksTable.platform eq request.platform) }
+            .singleOrNull()?.toEpisodeLinkDto()
     }
 
-    suspend fun getAllEpisodes(userId: UUID): List<EpisodeDto> = dbQuery {
-        EpisodesTable
+    suspend fun getEpisodesForUser(userId: UUID): List<EpisodeDto> = dbQuery {
+        val episodes = EpisodesTable
             .select { EpisodesTable.userId eq userId }
-            .orderBy(EpisodesTable.releaseDate to SortOrder.DESC)
-            .map { it.toEpisodeDto() }
+            .orderBy(EpisodesTable.publishedAt to SortOrder.DESC)
+            .map { it }
+
+        val episodeIds = episodes.map { it[EpisodesTable.id] }
+
+        val allLinks = if (episodeIds.isNotEmpty()) {
+            EpisodeLinksTable.select { EpisodeLinksTable.episodeId inList episodeIds }
+                .map { it }
+        } else {
+            emptyList()
+        }
+
+        episodes.map { row ->
+            val id = row[EpisodesTable.id]
+            val links = allLinks.filter { it[EpisodeLinksTable.episodeId] == id }.map { it.toEpisodeLinkDto() }
+            val totalViews = links.sumOf { it.viewCount }
+            row.toEpisodeDto(totalViews, links)
+        }
     }
 
-    private fun ResultRow.toEpisodeDto(): EpisodeDto {
+    suspend fun deleteEpisode(id: UUID): Boolean = dbQuery {
+        val count = EpisodesTable.deleteWhere { EpisodesTable.id eq id }
+        count > 0
+    }
+
+    private suspend fun getEpisode(id: UUID): EpisodeDto? = dbQuery {
+        val row = EpisodesTable.select { EpisodesTable.id eq id }.singleOrNull() ?: return@dbQuery null
+        val links = EpisodeLinksTable.select { EpisodeLinksTable.episodeId eq id }.map { it.toEpisodeLinkDto() }
+        val totalViews = links.sumOf { it.viewCount }
+        row.toEpisodeDto(totalViews, links)
+    }
+
+    private fun ResultRow.toEpisodeDto(totalViews: Long, links: List<EpisodeLinkDto>): EpisodeDto {
         return EpisodeDto(
             id = this[EpisodesTable.id].toString(),
-            userId = this[EpisodesTable.userId].toString(),
-            season = this[EpisodesTable.season],
-            episode = this[EpisodesTable.episode],
-            releaseDateEpochMillis = this[EpisodesTable.releaseDate].atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
-            views = this[EpisodesTable.views],
-            revenue = this[EpisodesTable.revenue],
-            watchTimeHours = this[EpisodesTable.watchTimeHours],
-            shares = this[EpisodesTable.shares],
-            comments = this[EpisodesTable.comments],
-            likes = this[EpisodesTable.likes]
+            title = this[EpisodesTable.title],
+            description = this[EpisodesTable.description],
+            publishedAt = this[EpisodesTable.publishedAt],
+            totalViews = totalViews,
+            links = links
+        )
+    }
+
+    private fun ResultRow.toEpisodeLinkDto(): EpisodeLinkDto {
+        return EpisodeLinkDto(
+            id = this[EpisodeLinksTable.id].toString(),
+            platform = this[EpisodeLinksTable.platform],
+            url = this[EpisodeLinksTable.url],
+            viewCount = this[EpisodeLinksTable.viewCount],
+            updatedAt = this[EpisodeLinksTable.updatedAt]
         )
     }
 }

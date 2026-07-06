@@ -73,6 +73,17 @@ fun AppNavGraph(navController: NavHostController, startDestination: String = Scr
             com.mtaanimation.growthos.android.ui.episodes.EpisodesScreen(navController = navController)
         }
 
+        composable(
+            route = "episode_detail/{episodeId}",
+            arguments = listOf(androidx.navigation.navArgument("episodeId") { type = androidx.navigation.NavType.StringType })
+        ) { backStackEntry ->
+            val episodeId = backStackEntry.arguments?.getString("episodeId") ?: return@composable
+            com.mtaanimation.growthos.android.ui.episodes.EpisodeDetailScreen(
+                episodeId = episodeId,
+                navController = navController
+            )
+        }
+
         composable(Screen.Uploads.route) {
             com.mtaanimation.growthos.android.ui.uploads.UploadsScreen(navController = navController)
         }

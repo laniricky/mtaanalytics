@@ -82,13 +82,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideEpisodesApiService(client: HttpClient, authDataStore: AuthDataStore): com.mtaanimation.growthos.android.data.network.EpisodesApiService =
-        com.mtaanimation.growthos.android.data.network.EpisodesApiService(client, authDataStore)
+    fun provideEpisodesApiService(client: HttpClient, authDataStore: AuthDataStore): com.mtaanimation.growthos.android.data.network.EpisodeApiService =
+        com.mtaanimation.growthos.android.data.network.EpisodeApiService(client, authDataStore)
 
     @Provides
     @Singleton
-    fun provideEpisodesRepository(apiService: com.mtaanimation.growthos.android.data.network.EpisodesApiService): com.mtaanimation.growthos.android.domain.repository.EpisodesRepository =
-        com.mtaanimation.growthos.android.domain.repository.EpisodesRepository(apiService)
+    fun provideEpisodesRepository(apiService: com.mtaanimation.growthos.android.data.network.EpisodeApiService): com.mtaanimation.growthos.android.domain.repository.EpisodeRepository =
+        com.mtaanimation.growthos.android.domain.repository.EpisodeRepository(apiService)
 
     @Provides
     @Singleton

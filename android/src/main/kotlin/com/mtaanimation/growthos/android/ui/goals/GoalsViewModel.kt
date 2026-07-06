@@ -44,32 +44,39 @@ class GoalsViewModel @Inject constructor(
         }
     }
 
-    fun recordWeeklyStats(
-        platformType: String,
-        currentFollowers: Long,
+    fun recordBatchStats(
+        statsMap: Map<String, Long>,
         dateEpochMillis: Long
     ) {
         viewModelScope.launch {
             _submitState.value = TrackingSubmitState.Submitting
+            
+            var hasError = false
+            var errorMessage = ""
 
-            val request = RecordStatsRequest(
-                platformType = com.mtaanimation.growthos.shared.models.PlatformType.valueOf(platformType.uppercase()),
-                currentFollowers = currentFollowers,
-                dateRecordedEpochMillis = dateEpochMillis
-            )
-
-            val result = statsRepository.recordStats(request)
-
-            if (result.isSuccess) {
-                _submitState.value = TrackingSubmitState.Success
-                // Invalidate dashboard cache so the next load shows fresh delta analytics
-                dashboardRepository.invalidateCache()
-                // Refresh dashboard state for the Goals screen
-                fetchDashboard()
-            } else {
-                _submitState.value = TrackingSubmitState.Error(
-                    result.exceptionOrNull()?.message ?: "Unknown error recording stats"
+            // Launch sequentially or concurrently. Here we'll just await all sequentially for simplicity and safety.
+            for ((platformStr, currentFollowers) in statsMap) {
+                if (currentFollowers <= 0) continue
+                
+                val request = RecordStatsRequest(
+                    platformType = com.mtaanimation.growthos.shared.models.PlatformType.valueOf(platformStr.uppercase()),
+                    currentFollowers = currentFollowers,
+                    dateRecordedEpochMillis = dateEpochMillis
                 )
+
+                val result = statsRepository.recordStats(request)
+                if (result.isFailure) {
+                    hasError = true
+                    errorMessage = result.exceptionOrNull()?.message ?: "Unknown error"
+                }
+            }
+
+            if (hasError) {
+                _submitState.value = TrackingSubmitState.Error("Error recording some stats: $errorMessage")
+            } else {
+                _submitState.value = TrackingSubmitState.Success
+                dashboardRepository.invalidateCache()
+                fetchDashboard()
             }
         }
     }

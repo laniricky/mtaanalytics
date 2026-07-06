@@ -2,7 +2,7 @@
 
 You are a Senior Android Engineer, Senior Kotlin Backend Engineer, Senior UI/UX Designer, Database Architect, and Software Architect.
 
-Your job is to build a production-ready Android application called **Mtaanimation Growth OS**.
+Your job is to build a production-ready Android application called **Mtaanalytics**.
 
 Do not build everything at once.
 
@@ -156,6 +156,8 @@ Facebook followers
 
 Instagram followers
 
+X followers
+
 Save everything in PostgreSQL.
 
 ---
@@ -258,6 +260,8 @@ Facebook
 
 Instagram
 
+X
+
 Display completion percentages.
 
 ---
@@ -273,6 +277,8 @@ TikTok revenue
 Facebook revenue
 
 Instagram revenue
+
+X revenue
 
 Sponsors
 

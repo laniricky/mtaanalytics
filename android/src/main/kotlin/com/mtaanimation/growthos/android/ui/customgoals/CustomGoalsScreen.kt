@@ -4,9 +4,9 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.mtaanimation.growthos.android.ui.dashboard.components.GoalProgressRing
@@ -246,18 +247,138 @@ private fun AddGoalDialog(
 
 @Composable
 private fun GoalsContent(state: CustomGoalsUiState.Success) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+    val upcoming = state.goals.filter { (it.currentValue / it.targetValue.coerceAtLeast(1.0)) < 1.0 }
+    val completed = state.goals.filter { (it.currentValue / it.targetValue.coerceAtLeast(1.0)) >= 1.0 }
+
+    LazyColumn(
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        items(state.goals) { goal ->
-            GoalCard(goal)
+        if (upcoming.isNotEmpty()) {
+            item {
+                Text(
+                    "ACTIVE MILESTONES",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = BrandMuted,
+                        letterSpacing = 1.5f.sp
+                    ),
+                    modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
+                )
+            }
+            items(upcoming) { goal ->
+                TimelineGoalCard(goal = goal, isLast = goal == upcoming.last() && completed.isEmpty())
+            }
+        }
+
+        if (completed.isNotEmpty()) {
+            item {
+                Text(
+                    "COMPLETED",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = BrandAhead,
+                        letterSpacing = 1.5f.sp
+                    ),
+                    modifier = Modifier.padding(top = 20.dp, bottom = 12.dp, start = 4.dp)
+                )
+            }
+            items(completed) { goal ->
+                TimelineGoalCard(goal = goal, isLast = goal == completed.last())
+            }
         }
     }
 }
+
+@Composable
+private fun TimelineGoalCard(goal: com.mtaanimation.growthos.shared.models.customgoals.CustomGoalDto, isLast: Boolean) {
+    val progress = (goal.currentValue / goal.targetValue.coerceAtLeast(1.0)).toFloat().coerceIn(0f, 1f)
+    val isComplete = progress >= 1f
+    val progressColor = when {
+        isComplete -> BrandAhead
+        progress >= 0.5f -> BrandOnTrack
+        else -> BrandOrange
+    }
+
+    Row(modifier = Modifier.fillMaxWidth()) {
+        // Timeline connector
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(32.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(if (isComplete) BrandAhead else BrandOrange)
+            )
+            if (!isLast) {
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .height(100.dp)
+                        .background(BrandSurface)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(bottom = if (isLast) 0.dp else 16.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(BrandSurface)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    goal.title,
+                    style = MaterialTheme.typography.titleSmall.copy(color = BrandWhite, fontWeight = FontWeight.Bold),
+                    modifier = Modifier.weight(1f)
+                )
+                // Type badge
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(BrandOrange.copy(alpha = 0.15f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        goal.type.take(4),
+                        style = MaterialTheme.typography.labelSmall.copy(color = BrandOrange, fontWeight = FontWeight.SemiBold)
+                    )
+                }
+            }
+
+            // Progress bar
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                    color = progressColor,
+                    trackColor = BrandSurface.copy(alpha = 0.0f)
+                )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        "${(progress * 100).toInt()}% complete",
+                        style = MaterialTheme.typography.labelSmall.copy(color = progressColor)
+                    )
+                    Text(
+                        "${goal.currentValue.formatCompact()} / ${goal.targetValue.formatCompact()} ${goal.type.lowercase()}",
+                        style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted)
+                    )
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun GoalCard(goal: CustomGoalDto) {

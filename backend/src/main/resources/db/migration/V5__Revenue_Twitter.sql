@@ -1,0 +1,1 @@
+ALTER TABLE revenue_entries ADD COLUMN twitter_revenue DOUBLE PRECISION DEFAULT 0.0 NOT NULL;

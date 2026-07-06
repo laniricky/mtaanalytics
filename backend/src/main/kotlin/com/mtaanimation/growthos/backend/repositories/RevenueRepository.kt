@@ -22,6 +22,7 @@ class RevenueRepository {
                 it[tiktokRevenue] = request.tiktokRevenue
                 it[facebookRevenue] = request.facebookRevenue
                 it[instagramRevenue] = request.instagramRevenue
+                it[twitterRevenue] = request.twitterRevenue
                 it[sponsors] = request.sponsors
                 it[merchandise] = request.merchandise
                 it[websiteIncome] = request.websiteIncome
@@ -36,6 +37,7 @@ class RevenueRepository {
                 it[tiktokRevenue] = request.tiktokRevenue
                 it[facebookRevenue] = request.facebookRevenue
                 it[instagramRevenue] = request.instagramRevenue
+                it[twitterRevenue] = request.twitterRevenue
                 it[sponsors] = request.sponsors
                 it[merchandise] = request.merchandise
                 it[websiteIncome] = request.websiteIncome
@@ -62,12 +64,13 @@ class RevenueRepository {
         val tt = this[RevenueTable.tiktokRevenue]
         val fb = this[RevenueTable.facebookRevenue]
         val ig = this[RevenueTable.instagramRevenue]
+        val tw = this[RevenueTable.twitterRevenue]
         val sp = this[RevenueTable.sponsors]
         val merch = this[RevenueTable.merchandise]
         val web = this[RevenueTable.websiteIncome]
         val other = this[RevenueTable.otherIncome]
         
-        val total = yt + tt + fb + ig + sp + merch + web + other
+        val total = yt + tt + fb + ig + tw + sp + merch + web + other
 
         return RevenueEntryDto(
             id = this[RevenueTable.id].toString(),
@@ -77,6 +80,7 @@ class RevenueRepository {
             tiktokRevenue = tt,
             facebookRevenue = fb,
             instagramRevenue = ig,
+            twitterRevenue = tw,
             sponsors = sp,
             merchandise = merch,
             websiteIncome = web,

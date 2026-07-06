@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
@@ -237,6 +238,7 @@ private fun MetricCard(label: String, value: String, subtitle: String, color: Co
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RevenueMonthCard(entry: RevenueEntryDto) {
     Column(
@@ -245,7 +247,7 @@ private fun RevenueMonthCard(entry: RevenueEntryDto) {
             .clip(RoundedCornerShape(16.dp))
             .background(BrandSurface)
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -256,33 +258,53 @@ private fun RevenueMonthCard(entry: RevenueEntryDto) {
             Text(entry.totalRevenue.fmt(), style = MaterialTheme.typography.titleLarge.copy(color = BrandOnTrack, fontWeight = FontWeight.Bold))
         }
 
-        HorizontalDivider(color = BrandDivider)
+        val sources = listOf(
+            "YouTube" to entry.youtubeRevenue,
+            "TikTok" to entry.tiktokRevenue,
+            "Facebook" to entry.facebookRevenue,
+            "Instagram" to entry.instagramRevenue,
+            "X (Twitter)" to entry.twitterRevenue,
+            "Sponsors" to entry.sponsors,
+            "Merch" to entry.merchandise,
+            "Website" to entry.websiteIncome,
+            "Other" to entry.otherIncome
+        ).filter { it.second > 0.0 }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            RevenueSourceCol("YouTube", entry.youtubeRevenue)
-            RevenueSourceCol("TikTok", entry.tiktokRevenue)
-            RevenueSourceCol("Facebook", entry.facebookRevenue)
-        }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            RevenueSourceCol("Instagram", entry.instagramRevenue)
-            RevenueSourceCol("Sponsors", entry.sponsors)
-            RevenueSourceCol("Merch", entry.merchandise)
-        }
-        if (entry.websiteIncome + entry.otherIncome > 0) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                RevenueSourceCol("Website", entry.websiteIncome)
-                RevenueSourceCol("Other", entry.otherIncome)
-                Spacer(Modifier.weight(1f))
+        if (sources.isNotEmpty()) {
+            HorizontalDivider(color = BrandDivider)
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                sources.forEach { (label, amount) ->
+                    RevenueChip(label, amount)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun RevenueSourceCol(label: String, amount: Double) {
-    Column(modifier = Modifier.width(90.dp)) {
-        Text(amount.fmt(), style = MaterialTheme.typography.bodyMedium.copy(color = if (amount > 0) BrandWhite else BrandMuted))
-        Text(label, style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted))
+private fun RevenueChip(label: String, amount: Double) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(BrandSurfaceVariant.copy(alpha = 0.5f))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Box(
+            modifier = Modifier.size(24.dp).clip(CircleShape).background(BrandOrange.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.AttachMoney, contentDescription = null, tint = BrandOrange, modifier = Modifier.size(14.dp))
+        }
+        Column {
+            Text(amount.fmt(), style = MaterialTheme.typography.bodyMedium.copy(color = BrandWhite, fontWeight = FontWeight.SemiBold))
+            Text(label, style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted))
+        }
     }
 }
 
@@ -300,15 +322,15 @@ private fun LogRevenueDialog(
     var tiktok   by remember { mutableStateOf("") }
     var facebook by remember { mutableStateOf("") }
     var instagram by remember { mutableStateOf("") }
+    var twitter  by remember { mutableStateOf("") }
     var sponsors  by remember { mutableStateOf("") }
     var merch    by remember { mutableStateOf("") }
     var website  by remember { mutableStateOf("") }
     var other    by remember { mutableStateOf("") }
 
-    // Live running total
     val liveTotal by remember {
         derivedStateOf {
-            listOf(youtube, tiktok, facebook, instagram, sponsors, merch, website, other)
+            listOf(youtube, tiktok, facebook, instagram, twitter, sponsors, merch, website, other)
                 .sumOf { it.toDoubleOrNull() ?: 0.0 }
         }
     }
@@ -450,6 +472,19 @@ private fun LogRevenueDialog(
                     onValue = { instagram = it }
                 )
             }
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                RevenueInputField(
+                    label = "X (Twitter)",
+                    value = twitter,
+                    modifier = Modifier.weight(1f),
+                    onValue = { twitter = it }
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            }
 
             Spacer(Modifier.height(24.dp))
 
@@ -514,6 +549,7 @@ private fun LogRevenueDialog(
                             tiktokRevenue = tiktok.toDoubleOrNull() ?: 0.0,
                             facebookRevenue = facebook.toDoubleOrNull() ?: 0.0,
                             instagramRevenue = instagram.toDoubleOrNull() ?: 0.0,
+                            twitterRevenue = twitter.toDoubleOrNull() ?: 0.0,
                             sponsors = sponsors.toDoubleOrNull() ?: 0.0,
                             merchandise = merch.toDoubleOrNull() ?: 0.0,
                             websiteIncome = website.toDoubleOrNull() ?: 0.0,

@@ -12,6 +12,7 @@ object RevenueTable : Table("revenue_entries") {
     val tiktokRevenue = double("tiktok_revenue").default(0.0)
     val facebookRevenue = double("facebook_revenue").default(0.0)
     val instagramRevenue = double("instagram_revenue").default(0.0)
+    val twitterRevenue = double("twitter_revenue").default(0.0)
     val sponsors = double("sponsors").default(0.0)
     val merchandise = double("merchandise").default(0.0)
     val websiteIncome = double("website_income").default(0.0)

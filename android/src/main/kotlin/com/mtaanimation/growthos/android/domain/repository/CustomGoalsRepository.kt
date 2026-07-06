@@ -3,6 +3,7 @@ package com.mtaanimation.growthos.android.domain.repository
 import com.mtaanimation.growthos.android.data.network.CustomGoalsApiService
 import com.mtaanimation.growthos.shared.models.customgoals.CreateCustomGoalRequest
 import com.mtaanimation.growthos.shared.models.customgoals.CustomGoalDto
+import com.mtaanimation.growthos.shared.models.customgoals.MilestoneLiveValues
 import com.mtaanimation.growthos.shared.models.customgoals.UpdateCustomGoalProgressRequest
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,4 +19,6 @@ class CustomGoalsRepository @Inject constructor(
 
     suspend fun updateProgress(request: UpdateCustomGoalProgressRequest): Result<CustomGoalDto> =
         apiService.updateProgress(request)
+
+    suspend fun getLiveValues(): Result<MilestoneLiveValues> = apiService.getLiveValues()
 }

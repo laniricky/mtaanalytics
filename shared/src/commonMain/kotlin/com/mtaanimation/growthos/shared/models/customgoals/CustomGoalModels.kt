@@ -27,3 +27,15 @@ data class UpdateCustomGoalProgressRequest(
     val id: String,
     val currentValue: Double
 )
+
+/**
+ * Live aggregate values computed from existing data sources.
+ * Returned by GET /api/milestones/live-values
+ */
+@Serializable
+data class MilestoneLiveValues(
+    val totalViews: Long,       // sum of all episode_links.view_count
+    val totalEpisodes: Long,    // count of episodes rows
+    val totalRevenue: Double,   // sum of all revenue entries
+    val totalFollowers: Long    // sum of latest currentFollowers across all platforms
+)

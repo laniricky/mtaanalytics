@@ -3,6 +3,7 @@ package com.mtaanimation.growthos.android.data.network
 import com.mtaanimation.growthos.android.data.datastore.AuthDataStore
 import com.mtaanimation.growthos.shared.models.customgoals.CreateCustomGoalRequest
 import com.mtaanimation.growthos.shared.models.customgoals.CustomGoalDto
+import com.mtaanimation.growthos.shared.models.customgoals.MilestoneLiveValues
 import com.mtaanimation.growthos.shared.models.customgoals.UpdateCustomGoalProgressRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -48,6 +49,13 @@ class CustomGoalsApiService @Inject constructor(
             contentType(ContentType.Application.Json)
             bearerAuth(token)
             setBody(request)
+        }.body()
+    }
+
+    suspend fun getLiveValues(): Result<MilestoneLiveValues> = runCatching {
+        val token = authDataStore.tokenFlow.first() ?: error("Not authenticated")
+        client.get("$BASE_URL/api/milestones/live-values") {
+            bearerAuth(token)
         }.body()
     }
 }

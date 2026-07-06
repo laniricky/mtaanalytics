@@ -11,6 +11,7 @@ import com.mtaanimation.growthos.backend.routes.revenueRoutes
 import com.mtaanimation.growthos.backend.routes.episodeRoutes
 import com.mtaanimation.growthos.backend.routes.uploadRoutes
 import com.mtaanimation.growthos.backend.routes.customGoalRoutes
+import com.mtaanimation.growthos.backend.routes.milestoneLiveValuesRoute
 import com.mtaanimation.growthos.backend.services.ProjectionService
 import io.ktor.http.ContentType
 import io.ktor.server.application.Application
@@ -104,5 +105,6 @@ fun Application.configureRouting() {
         episodeRoutes(episodeRepository, userRepository)
         uploadRoutes(uploadRepository, userRepository)
         customGoalRoutes(customGoalRepository, userRepository)
+        milestoneLiveValuesRoute(userRepository)
     }
 }

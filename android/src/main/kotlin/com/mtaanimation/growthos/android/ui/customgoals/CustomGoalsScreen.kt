@@ -19,17 +19,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.mtaanimation.growthos.android.ui.dashboard.components.GoalProgressRing
 import com.mtaanimation.growthos.android.ui.navigation.AppBottomNavBar
 import com.mtaanimation.growthos.android.ui.theme.*
 import com.mtaanimation.growthos.shared.models.customgoals.CreateCustomGoalRequest
 import com.mtaanimation.growthos.shared.models.customgoals.CustomGoalDto
+import com.mtaanimation.growthos.shared.models.customgoals.MilestoneLiveValues
+import com.mtaanimation.growthos.shared.models.customgoals.UpdateCustomGoalProgressRequest
 import java.time.LocalDate
 import java.time.ZoneOffset
 
@@ -40,24 +42,15 @@ fun CustomGoalsScreen(
     viewModel: CustomGoalsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var isRefreshing by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
-    // Holds the goal currently being updated (id, currentValue, title, type)
     var goalToUpdate by remember { mutableStateOf<CustomGoalDto?>(null) }
-
-    LaunchedEffect(uiState) {
-        if (uiState !is CustomGoalsUiState.Loading) isRefreshing = false
-    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Milestone Goals", color = BrandWhite) },
+                title = { Text("Milestones", color = BrandWhite) },
                 actions = {
-                    IconButton(onClick = {
-                        isRefreshing = true
-                        viewModel.loadData()
-                    }) {
+                    IconButton(onClick = { viewModel.loadData() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = BrandOrange)
                     }
                 },
@@ -93,7 +86,11 @@ fun CustomGoalsScreen(
                         if (state.goals.isEmpty()) {
                             EmptyState { showAddDialog = true }
                         } else {
-                            GoalsContent(state, onUpdateClick = { goal -> goalToUpdate = goal })
+                            GoalsContent(
+                                state = state,
+                                viewModel = viewModel,
+                                onUpdateClick = { goal -> goalToUpdate = goal }
+                            )
                         }
                     }
                 }
@@ -101,7 +98,7 @@ fun CustomGoalsScreen(
         }
     }
 
-    // Update Progress Dialog
+    // Update Progress Dialog — only for OTHER type goals
     val target = goalToUpdate
     if (target != null) {
         UpdateProgressDialog(
@@ -109,7 +106,7 @@ fun CustomGoalsScreen(
             onDismiss = { goalToUpdate = null },
             onConfirm = { newValue ->
                 viewModel.updateProgress(
-                    com.mtaanimation.growthos.shared.models.customgoals.UpdateCustomGoalProgressRequest(
+                    UpdateCustomGoalProgressRequest(
                         id = target.id,
                         currentValue = newValue
                     )
@@ -137,6 +134,227 @@ fun CustomGoalsScreen(
     }
 }
 
+@Composable
+private fun GoalsContent(
+    state: CustomGoalsUiState.Success,
+    viewModel: CustomGoalsViewModel,
+    onUpdateClick: (CustomGoalDto) -> Unit
+) {
+    val liveValues = state.liveValues
+
+    // Compute effective currentValue for each goal using live data where available
+    fun effectiveCurrent(goal: CustomGoalDto) = viewModel.liveCurrentValue(goal, liveValues)
+
+    val upcoming = state.goals.filter { effectiveCurrent(it) / it.targetValue.coerceAtLeast(1.0) < 1.0 }
+    val completed = state.goals.filter { effectiveCurrent(it) / it.targetValue.coerceAtLeast(1.0) >= 1.0 }
+
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        if (upcoming.isNotEmpty()) {
+            item {
+                Text(
+                    "ACTIVE MILESTONES",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = BrandMuted,
+                        letterSpacing = 1.5f.sp
+                    ),
+                    modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
+                )
+            }
+            items(upcoming) { goal ->
+                TimelineGoalCard(
+                    goal = goal,
+                    effectiveCurrent = effectiveCurrent(goal),
+                    isLast = goal == upcoming.last() && completed.isEmpty(),
+                    onUpdateClick = if (goal.type !in AUTO_TRACKED_TYPES) {
+                        { onUpdateClick(goal) }
+                    } else null
+                )
+            }
+        }
+
+        if (completed.isNotEmpty()) {
+            item {
+                Text(
+                    "COMPLETED",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = BrandAhead,
+                        letterSpacing = 1.5f.sp
+                    ),
+                    modifier = Modifier.padding(top = 20.dp, bottom = 12.dp, start = 4.dp)
+                )
+            }
+            items(completed) { goal ->
+                TimelineGoalCard(
+                    goal = goal,
+                    effectiveCurrent = effectiveCurrent(goal),
+                    isLast = goal == completed.last(),
+                    onUpdateClick = null
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineGoalCard(
+    goal: CustomGoalDto,
+    effectiveCurrent: Double,
+    isLast: Boolean,
+    onUpdateClick: (() -> Unit)?
+) {
+    val progress = (effectiveCurrent / goal.targetValue.coerceAtLeast(1.0)).toFloat().coerceIn(0f, 1f)
+    val isComplete = progress >= 1f
+    val isAutoTracked = goal.type in AUTO_TRACKED_TYPES
+
+    val progressColor = when {
+        isComplete -> BrandAhead
+        progress >= 0.5f -> BrandOnTrack
+        else -> BrandOrange
+    }
+
+    Row(modifier = Modifier.fillMaxWidth()) {
+        // Timeline dot + connector line
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(32.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(if (isComplete) BrandAhead else BrandOrange)
+            )
+            if (!isLast) {
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .height(if (onUpdateClick != null) 116.dp else 100.dp)
+                        .background(BrandSurface)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(bottom = if (isLast) 0.dp else 16.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(BrandSurface)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Title + badges row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    goal.title,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        color = BrandWhite,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // Auto-tracked live badge
+                    if (isAutoTracked) {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF1B4332))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(BrandAhead)
+                            )
+                            Text(
+                                "Live",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = BrandAhead,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                        }
+                    }
+
+                    // Goal type badge
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(BrandOrange.copy(alpha = 0.15f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            goal.type.take(4),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = BrandOrange,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Progress bar + labels
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = progressColor,
+                    trackColor = BrandSurfaceVariant
+                )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        "${(progress * 100).toInt()}% complete",
+                        style = MaterialTheme.typography.labelSmall.copy(color = progressColor)
+                    )
+                    Text(
+                        "${effectiveCurrent.formatCompact()} / ${goal.targetValue.formatCompact()} ${goal.type.lowercase()}",
+                        style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted)
+                    )
+                }
+            }
+
+            // Show "Log Progress" only for OTHER type goals
+            if (onUpdateClick != null) {
+                TextButton(
+                    onClick = onUpdateClick,
+                    modifier = Modifier.align(Alignment.End),
+                    colors = ButtonDefaults.textButtonColors(contentColor = BrandOrange)
+                ) {
+                    Text(
+                        "Log Progress →",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
+            } else if (isAutoTracked && !isComplete) {
+                Text(
+                    "Auto-tracked from your app data",
+                    style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted),
+                    modifier = Modifier.align(Alignment.End)
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddGoalDialog(
@@ -148,8 +366,8 @@ private fun AddGoalDialog(
     var selectedType by remember { mutableStateOf("VIEWS") }
     var typeExpanded by remember { mutableStateOf(false) }
 
-    val typeOptions = listOf("VIEWS", "REVENUE", "EPISODES", "FOLLOWERS", "SUBSCRIBERS", "OTHER")
-    // Default deadline: 1 year from now
+    // Simplified types — FOLLOWERS merges followers+subscribers
+    val typeOptions = listOf("VIEWS", "REVENUE", "EPISODES", "FOLLOWERS", "OTHER")
     val defaultDeadline = LocalDate.now().plusYears(1)
         .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
@@ -158,7 +376,7 @@ private fun AddGoalDialog(
         containerColor = BrandSurface,
         title = {
             Text(
-                "New Milestone Goal",
+                "New Milestone",
                 style = MaterialTheme.typography.titleLarge.copy(
                     color = BrandOrange,
                     fontWeight = FontWeight.Bold
@@ -167,10 +385,34 @@ private fun AddGoalDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Info banner for auto-tracked types
+                if (selectedType in AUTO_TRACKED_TYPES) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF1B4332).copy(alpha = 0.5f))
+                            .padding(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(BrandAhead)
+                        )
+                        Text(
+                            "Progress is tracked automatically from your ${selectedType.lowercase()} data.",
+                            style = MaterialTheme.typography.labelSmall.copy(color = BrandAhead)
+                        )
+                    }
+                }
+
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Goal Title") },
+                    label = { Text("Milestone Title") },
                     placeholder = { Text("e.g. 1 Billion Views") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -189,7 +431,7 @@ private fun AddGoalDialog(
                     value = targetInput,
                     onValueChange = { targetInput = it.filter { c -> c.isDigit() || c == '.' } },
                     label = { Text("Target Value") },
-                    placeholder = { Text("e.g. 1000000") },
+                    placeholder = { Text("e.g. 1000000000") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
@@ -204,7 +446,6 @@ private fun AddGoalDialog(
                     )
                 )
 
-                // Type dropdown
                 ExposedDropdownMenuBox(
                     expanded = typeExpanded,
                     onExpandedChange = { typeExpanded = !typeExpanded }
@@ -213,7 +454,7 @@ private fun AddGoalDialog(
                         value = selectedType,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Goal Type") },
+                        label = { Text("Type") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
                         modifier = Modifier.fillMaxWidth().menuAnchor(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -246,185 +487,24 @@ private fun AddGoalDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val target = targetInput.toDoubleOrNull() ?: 0.0
-                    if (title.isNotBlank() && target > 0) {
-                        onConfirm(title.trim(), target, selectedType, defaultDeadline)
+                    val t = targetInput.toDoubleOrNull() ?: 0.0
+                    if (title.isNotBlank() && t > 0) {
+                        onConfirm(title.trim(), t, selectedType, defaultDeadline)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = BrandOrange),
                 enabled = title.isNotBlank() && (targetInput.toDoubleOrNull() ?: 0.0) > 0
             ) {
-                Text("Create Goal", color = BrandCharcoal, fontWeight = FontWeight.Bold)
+                Text("Create", color = BrandCharcoal, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = BrandMuted)
-            }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = BrandMuted) }
         }
     )
 }
 
-@Composable
-private fun GoalsContent(state: CustomGoalsUiState.Success, onUpdateClick: (CustomGoalDto) -> Unit) {
-    val upcoming = state.goals.filter { (it.currentValue / it.targetValue.coerceAtLeast(1.0)) < 1.0 }
-    val completed = state.goals.filter { (it.currentValue / it.targetValue.coerceAtLeast(1.0)) >= 1.0 }
-
-    LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp),
-        modifier = Modifier.fillMaxSize()
-    ) {
-        if (upcoming.isNotEmpty()) {
-            item {
-                Text(
-                    "ACTIVE MILESTONES",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = BrandMuted,
-                        letterSpacing = 1.5f.sp
-                    ),
-                    modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
-                )
-            }
-            items(upcoming) { goal ->
-                TimelineGoalCard(
-                    goal = goal,
-                    isLast = goal == upcoming.last() && completed.isEmpty(),
-                    onUpdateClick = { onUpdateClick(goal) }
-                )
-            }
-        }
-
-        if (completed.isNotEmpty()) {
-            item {
-                Text(
-                    "COMPLETED",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = BrandAhead,
-                        letterSpacing = 1.5f.sp
-                    ),
-                    modifier = Modifier.padding(top = 20.dp, bottom = 12.dp, start = 4.dp)
-                )
-            }
-            items(completed) { goal ->
-                TimelineGoalCard(
-                    goal = goal,
-                    isLast = goal == completed.last(),
-                    onUpdateClick = null // no update for completed
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TimelineGoalCard(
-    goal: com.mtaanimation.growthos.shared.models.customgoals.CustomGoalDto,
-    isLast: Boolean,
-    onUpdateClick: (() -> Unit)?
-) {
-    val progress = (goal.currentValue / goal.targetValue.coerceAtLeast(1.0)).toFloat().coerceIn(0f, 1f)
-    val isComplete = progress >= 1f
-    val progressColor = when {
-        isComplete -> BrandAhead
-        progress >= 0.5f -> BrandOnTrack
-        else -> BrandOrange
-    }
-
-    Row(modifier = Modifier.fillMaxWidth()) {
-        // Timeline connector dot + line
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(32.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(if (isComplete) BrandAhead else BrandOrange)
-            )
-            if (!isLast) {
-                Box(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .height(if (onUpdateClick != null) 116.dp else 100.dp)
-                        .background(BrandSurface)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(bottom = if (isLast) 0.dp else 16.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(BrandSurface)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // Title + type badge
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    goal.title,
-                    style = MaterialTheme.typography.titleSmall.copy(color = BrandWhite, fontWeight = FontWeight.Bold),
-                    modifier = Modifier.weight(1f)
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BrandOrange.copy(alpha = 0.15f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        goal.type.take(4),
-                        style = MaterialTheme.typography.labelSmall.copy(color = BrandOrange, fontWeight = FontWeight.SemiBold)
-                    )
-                }
-            }
-
-            // Progress bar + labels
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                    color = progressColor,
-                    trackColor = BrandSurface.copy(alpha = 0.0f)
-                )
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(
-                        "${(progress * 100).toInt()}% complete",
-                        style = MaterialTheme.typography.labelSmall.copy(color = progressColor)
-                    )
-                    Text(
-                        "${goal.currentValue.formatCompact()} / ${goal.targetValue.formatCompact()} ${goal.type.lowercase()}",
-                        style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted)
-                    )
-                }
-            }
-
-            // Update button — only shown for active (incomplete) milestones
-            if (onUpdateClick != null) {
-                TextButton(
-                    onClick = onUpdateClick,
-                    modifier = Modifier.align(Alignment.End),
-                    colors = ButtonDefaults.textButtonColors(contentColor = BrandOrange)
-                ) {
-                    Text(
-                        "Log Progress →",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                }
-            }
-        }
-    }
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UpdateProgressDialog(
     goal: CustomGoalDto,
@@ -450,11 +530,13 @@ private fun UpdateProgressDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Live preview progress
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     LinearProgressIndicator(
                         progress = { newProgress.toFloat() },
-                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp)),
                         color = BrandOrange,
                         trackColor = BrandSurfaceVariant
                     )
@@ -474,11 +556,8 @@ private fun UpdateProgressDialog(
                     value = input,
                     onValueChange = { input = it.filter { c -> c.isDigit() || c == '.' } },
                     label = { Text("Current ${goal.type.lowercase()} count") },
-                    placeholder = { Text("e.g. ${goal.targetValue.toLong() / 2}") },
                     singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = BrandWhite,
@@ -502,49 +581,9 @@ private fun UpdateProgressDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = BrandMuted)
-            }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = BrandMuted) }
         }
     )
-}
-
-
-@Composable
-private fun GoalCard(goal: CustomGoalDto) {
-    val progress = if (goal.targetValue > 0) (goal.currentValue / goal.targetValue).toFloat().coerceIn(0f, 1f) else 0f
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(BrandSurface)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = goal.title,
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = BrandWhite),
-            maxLines = 2
-        )
-
-        GoalProgressRing(
-            percentage = (progress * 100).toDouble(),
-            modifier = Modifier.size(100.dp)
-        )
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Current: ${goal.currentValue.formatCompact()}",
-                style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted)
-            )
-            Text(
-                text = "Target: ${goal.targetValue.formatCompact()} ${goal.type.lowercase()}",
-                style = MaterialTheme.typography.labelMedium.copy(color = BrandOrange, fontWeight = FontWeight.Bold)
-            )
-        }
-    }
 }
 
 @Composable
@@ -562,11 +601,11 @@ private fun EmptyState(onAdd: () -> Unit) {
                 modifier = Modifier.size(64.dp)
             )
             Text(
-                "No milestone goals yet",
+                "No milestones yet",
                 style = MaterialTheme.typography.titleMedium.copy(color = BrandWhite)
             )
             Text(
-                "Tap + to create your first goal",
+                "Tap + to set your first big goal",
                 style = MaterialTheme.typography.bodyMedium.copy(color = BrandMuted)
             )
             Button(
@@ -575,7 +614,7 @@ private fun EmptyState(onAdd: () -> Unit) {
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Add Goal", color = BrandCharcoal, fontWeight = FontWeight.Bold)
+                Text("Add Milestone", color = BrandCharcoal, fontWeight = FontWeight.Bold)
             }
         }
     }

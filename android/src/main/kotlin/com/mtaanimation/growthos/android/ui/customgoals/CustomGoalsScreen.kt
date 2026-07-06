@@ -42,6 +42,8 @@ fun CustomGoalsScreen(
     val uiState by viewModel.uiState.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
+    // Holds the goal currently being updated (id, currentValue, title, type)
+    var goalToUpdate by remember { mutableStateOf<CustomGoalDto?>(null) }
 
     LaunchedEffect(uiState) {
         if (uiState !is CustomGoalsUiState.Loading) isRefreshing = false
@@ -91,7 +93,7 @@ fun CustomGoalsScreen(
                         if (state.goals.isEmpty()) {
                             EmptyState { showAddDialog = true }
                         } else {
-                            GoalsContent(state)
+                            GoalsContent(state, onUpdateClick = { goal -> goalToUpdate = goal })
                         }
                     }
                 }
@@ -99,15 +101,33 @@ fun CustomGoalsScreen(
         }
     }
 
+    // Update Progress Dialog
+    val target = goalToUpdate
+    if (target != null) {
+        UpdateProgressDialog(
+            goal = target,
+            onDismiss = { goalToUpdate = null },
+            onConfirm = { newValue ->
+                viewModel.updateProgress(
+                    com.mtaanimation.growthos.shared.models.customgoals.UpdateCustomGoalProgressRequest(
+                        id = target.id,
+                        currentValue = newValue
+                    )
+                )
+                goalToUpdate = null
+            }
+        )
+    }
+
     if (showAddDialog) {
         AddGoalDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { title, target, type, deadlineMillis ->
+            onConfirm = { title, target2, type, deadlineMillis ->
                 viewModel.createGoal(
                     CreateCustomGoalRequest(
                         title = title,
                         type = type,
-                        targetValue = target,
+                        targetValue = target2,
                         deadlineEpochMillis = deadlineMillis
                     )
                 )
@@ -246,7 +266,7 @@ private fun AddGoalDialog(
 }
 
 @Composable
-private fun GoalsContent(state: CustomGoalsUiState.Success) {
+private fun GoalsContent(state: CustomGoalsUiState.Success, onUpdateClick: (CustomGoalDto) -> Unit) {
     val upcoming = state.goals.filter { (it.currentValue / it.targetValue.coerceAtLeast(1.0)) < 1.0 }
     val completed = state.goals.filter { (it.currentValue / it.targetValue.coerceAtLeast(1.0)) >= 1.0 }
 
@@ -267,7 +287,11 @@ private fun GoalsContent(state: CustomGoalsUiState.Success) {
                 )
             }
             items(upcoming) { goal ->
-                TimelineGoalCard(goal = goal, isLast = goal == upcoming.last() && completed.isEmpty())
+                TimelineGoalCard(
+                    goal = goal,
+                    isLast = goal == upcoming.last() && completed.isEmpty(),
+                    onUpdateClick = { onUpdateClick(goal) }
+                )
             }
         }
 
@@ -283,14 +307,22 @@ private fun GoalsContent(state: CustomGoalsUiState.Success) {
                 )
             }
             items(completed) { goal ->
-                TimelineGoalCard(goal = goal, isLast = goal == completed.last())
+                TimelineGoalCard(
+                    goal = goal,
+                    isLast = goal == completed.last(),
+                    onUpdateClick = null // no update for completed
+                )
             }
         }
     }
 }
 
 @Composable
-private fun TimelineGoalCard(goal: com.mtaanimation.growthos.shared.models.customgoals.CustomGoalDto, isLast: Boolean) {
+private fun TimelineGoalCard(
+    goal: com.mtaanimation.growthos.shared.models.customgoals.CustomGoalDto,
+    isLast: Boolean,
+    onUpdateClick: (() -> Unit)?
+) {
     val progress = (goal.currentValue / goal.targetValue.coerceAtLeast(1.0)).toFloat().coerceIn(0f, 1f)
     val isComplete = progress >= 1f
     val progressColor = when {
@@ -300,7 +332,7 @@ private fun TimelineGoalCard(goal: com.mtaanimation.growthos.shared.models.custo
     }
 
     Row(modifier = Modifier.fillMaxWidth()) {
-        // Timeline connector
+        // Timeline connector dot + line
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.width(32.dp)
@@ -315,7 +347,7 @@ private fun TimelineGoalCard(goal: com.mtaanimation.growthos.shared.models.custo
                 Box(
                     modifier = Modifier
                         .width(2.dp)
-                        .height(100.dp)
+                        .height(if (onUpdateClick != null) 116.dp else 100.dp)
                         .background(BrandSurface)
                 )
             }
@@ -332,6 +364,7 @@ private fun TimelineGoalCard(goal: com.mtaanimation.growthos.shared.models.custo
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // Title + type badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -342,7 +375,6 @@ private fun TimelineGoalCard(goal: com.mtaanimation.growthos.shared.models.custo
                     style = MaterialTheme.typography.titleSmall.copy(color = BrandWhite, fontWeight = FontWeight.Bold),
                     modifier = Modifier.weight(1f)
                 )
-                // Type badge
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
@@ -356,7 +388,7 @@ private fun TimelineGoalCard(goal: com.mtaanimation.growthos.shared.models.custo
                 }
             }
 
-            // Progress bar
+            // Progress bar + labels
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 LinearProgressIndicator(
                     progress = { progress },
@@ -375,8 +407,106 @@ private fun TimelineGoalCard(goal: com.mtaanimation.growthos.shared.models.custo
                     )
                 }
             }
+
+            // Update button — only shown for active (incomplete) milestones
+            if (onUpdateClick != null) {
+                TextButton(
+                    onClick = onUpdateClick,
+                    modifier = Modifier.align(Alignment.End),
+                    colors = ButtonDefaults.textButtonColors(contentColor = BrandOrange)
+                ) {
+                    Text(
+                        "Log Progress →",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun UpdateProgressDialog(
+    goal: CustomGoalDto,
+    onDismiss: () -> Unit,
+    onConfirm: (Double) -> Unit
+) {
+    var input by remember { mutableStateOf(goal.currentValue.toLong().toString()) }
+    val newValue = input.toDoubleOrNull() ?: 0.0
+    val newProgress = (newValue / goal.targetValue.coerceAtLeast(1.0)).coerceIn(0.0, 1.0)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = BrandSurface,
+        title = {
+            Text(
+                goal.title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = BrandOrange,
+                    fontWeight = FontWeight.Bold
+                ),
+                maxLines = 2
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Live preview progress
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    LinearProgressIndicator(
+                        progress = { newProgress.toFloat() },
+                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                        color = BrandOrange,
+                        trackColor = BrandSurfaceVariant
+                    )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(
+                            "${(newProgress * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelSmall.copy(color = BrandOrange)
+                        )
+                        Text(
+                            "Target: ${goal.targetValue.formatCompact()} ${goal.type.lowercase()}",
+                            style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted)
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it.filter { c -> c.isDigit() || c == '.' } },
+                    label = { Text("Current ${goal.type.lowercase()} count") },
+                    placeholder = { Text("e.g. ${goal.targetValue.toLong() / 2}") },
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = BrandWhite,
+                        unfocusedTextColor = BrandWhite,
+                        focusedBorderColor = BrandOrange,
+                        unfocusedBorderColor = BrandSurfaceVariant,
+                        focusedLabelColor = BrandOrange,
+                        unfocusedLabelColor = BrandMuted,
+                        cursorColor = BrandOrange
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { if (newValue > 0) onConfirm(newValue) },
+                enabled = newValue > 0,
+                colors = ButtonDefaults.buttonColors(containerColor = BrandOrange)
+            ) {
+                Text("Save Progress", color = BrandCharcoal, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = BrandMuted)
+            }
+        }
+    )
 }
 
 

@@ -155,7 +155,7 @@ fun EpisodeCard(episode: EpisodeDto, onClick: () -> Unit) {
         }
         
         Column(horizontalAlignment = Alignment.End) {
-            Text(episode.totalViews.fmtCompact(), style = MaterialTheme.typography.titleLarge.copy(color = BrandOnTrack, fontWeight = FontWeight.Bold))
+            Text(episode.totalViews.fmtCompact(), style = MaterialTheme.typography.titleLarge.copy(color = BrandAhead, fontWeight = FontWeight.Bold))
             Text("Total Views", style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted))
         }
     }
@@ -218,7 +218,7 @@ private fun TotalViewsCard(totalViews: Long, episodeCount: Int) {
             Text(
                 episodeCount.toString(),
                 style = MaterialTheme.typography.headlineSmall.copy(
-                    color = BrandOnTrack,
+                    color = BrandAhead,
                     fontWeight = FontWeight.Bold
                 )
             )

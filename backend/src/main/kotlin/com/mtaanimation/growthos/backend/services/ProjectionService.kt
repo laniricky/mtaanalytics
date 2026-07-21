@@ -12,10 +12,10 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
+import kotlin.math.roundToLong
 import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.exp
-import kotlin.math.roundToLong
 
 /**
  * ProjectionService computes all growth projections dynamically.
@@ -69,20 +69,19 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         val deadlineZoned = JOURNEY_END.atZone(ZoneOffset.UTC)
         val remainingMonths = ChronoUnit.MONTHS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
 
-        // Months elapsed since journey START (fixed baseline)
-        val monthsElapsed = ChronoUnit.MONTHS.between(
-            JOURNEY_START.atZone(ZoneOffset.UTC), nowZoned
-        ).coerceAtLeast(0)
+        // Day-level precision: exact days elapsed since journey start → fractional months
+        val daysElapsedFromStart = ChronoUnit.DAYS.between(JOURNEY_START, nowInstant).coerceAtLeast(0)
+        val fractionalMonthsElapsed = daysElapsedFromStart / 30.4375
 
         val percentageComplete = if (combinedTarget > 0) (combinedCurrent.toDouble() / combinedTarget) * 100.0 else 0.0
         val remainingFollowers = (combinedTarget - combinedCurrent).coerceAtLeast(0)
 
-        // Where the fixed S-curve expects us to be TODAY (combined)
+        // Where the fixed S-curve expects us to be TODAY (day-precision, combined)
         val combinedMilestoneToday = GrowthConstants.GOALS.entries.sumOf { (platform, goal) ->
             calculateFixedLogisticProjection(
                 base = goal.base,
                 target = goal.target,
-                monthsElapsed = monthsElapsed,
+                monthsElapsed = fractionalMonthsElapsed,
                 totalMonths = GrowthConstants.TOTAL_MONTHS
             )
         }
@@ -92,17 +91,26 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         val combinedVariancePct = if (combinedMilestoneToday > 0)
             (combinedVariance.toDouble() / combinedMilestoneToday.toDouble()) * 100.0 else 0.0
 
-        // Next month milestone for required gain
+        // Tomorrow's milestone for precise daily gain (1 day = 1/30.4375 months)
+        val combinedTomorrowMilestone = GrowthConstants.GOALS.entries.sumOf { (platform, goal) ->
+            calculateFixedLogisticProjection(
+                base = goal.base,
+                target = goal.target,
+                monthsElapsed = fractionalMonthsElapsed + (1.0 / 30.4375),
+                totalMonths = GrowthConstants.TOTAL_MONTHS
+            )
+        }
+        val requiredDailyGain = (combinedTomorrowMilestone - combinedMilestoneToday).coerceAtLeast(0)
+        // Required monthly is daily × avg days/month (for display)
         val combinedNextMonthMilestone = GrowthConstants.GOALS.entries.sumOf { (platform, goal) ->
             calculateFixedLogisticProjection(
                 base = goal.base,
                 target = goal.target,
-                monthsElapsed = monthsElapsed + 1,
+                monthsElapsed = fractionalMonthsElapsed + 1.0,
                 totalMonths = GrowthConstants.TOTAL_MONTHS
             )
         }
         val requiredMonthlyGain = (combinedNextMonthMilestone - combinedMilestoneToday).coerceAtLeast(0)
-        val requiredDailyGain = (requiredMonthlyGain / 30.44).toLong()
 
         // Actual combined growth rate
         val combinedActualMonthlyRate = computeActualMonthlyRate(allStats)
@@ -122,7 +130,7 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
                 latestStats = latestStats,
                 history = allStats.filter { it.platformType == platform },
                 nowInstant = nowInstant,
-                monthsElapsed = monthsElapsed
+                fractionalMonthsElapsed = fractionalMonthsElapsed
             )
         }
 
@@ -150,7 +158,7 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         latestStats: PlatformStats?,
         history: List<PlatformStats>,
         nowInstant: Instant,
-        monthsElapsed: Long
+        fractionalMonthsElapsed: Double
     ): PlatformProjection {
         val goal = GrowthConstants.GOALS[platform]!!
         val currentFollowers = latestStats?.currentFollowers ?: goal.base
@@ -160,11 +168,11 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         val remainingMonths = ChronoUnit.MONTHS.between(nowZoned, deadlineZoned).coerceAtLeast(1)
         val remaining = (goal.target - currentFollowers).coerceAtLeast(0)
 
-        // Where the fixed curve expects this platform to be TODAY
+        // Day-precision: where the fixed curve expects this platform to be TODAY
         val milestoneToday = calculateFixedLogisticProjection(
             base = goal.base,
             target = goal.target,
-            monthsElapsed = monthsElapsed,
+            monthsElapsed = fractionalMonthsElapsed,
             totalMonths = GrowthConstants.TOTAL_MONTHS
         )
 
@@ -173,17 +181,25 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
         val variancePct = if (milestoneToday > 0)
             (varianceFollowers.toDouble() / milestoneToday.toDouble()) * 100.0 else 0.0
 
-        // Next month milestone for required gain
+        // Tomorrow's milestone → precise required daily gain
+        val tomorrowMilestone = calculateFixedLogisticProjection(
+            base = goal.base,
+            target = goal.target,
+            monthsElapsed = fractionalMonthsElapsed + (1.0 / 30.4375),
+            totalMonths = GrowthConstants.TOTAL_MONTHS
+        )
+        val requiredDaily = (tomorrowMilestone - milestoneToday).coerceAtLeast(0)
+
+        // Next month milestone for monthly/weekly/yearly display
         val nextMonthMilestone = calculateFixedLogisticProjection(
             base = goal.base,
             target = goal.target,
-            monthsElapsed = monthsElapsed + 1,
+            monthsElapsed = fractionalMonthsElapsed + 1.0,
             totalMonths = GrowthConstants.TOTAL_MONTHS
         )
         val requiredMonthly = (nextMonthMilestone - milestoneToday).coerceAtLeast(0)
         val requiredYearly = requiredMonthly * 12
         val requiredWeekly = (requiredMonthly / 4.33).toLong()
-        val requiredDaily = (requiredMonthly / 30.44).toLong()
 
         val actualMonthlyRate = computeActualMonthlyRate(history)
 
@@ -248,7 +264,7 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
             val projectedValue = calculateFixedLogisticProjection(
                 base = base,
                 target = target,
-                monthsElapsed = monthOffset,
+                monthsElapsed = monthOffset.toDouble(), // chart uses whole months
                 totalMonths = GrowthConstants.TOTAL_MONTHS
             )
             val key = "${cursor.year}-${cursor.monthValue}"
@@ -301,19 +317,21 @@ class ProjectionService(private val platformStatsRepository: PlatformStatsReposi
 
     /**
      * Calculates the S-curve projection from a FIXED base value over the total 120-month journey.
-     * Unlike the old method which started from "current followers", this always starts from [base].
+     *
+     * [monthsElapsed] now accepts a fractional Double so callers can pass day-level precision
+     * (e.g. daysElapsed / 30.4375). Monthly chart points still pass integer offsets cast to Double.
      */
     private fun calculateFixedLogisticProjection(
         base: Long,
         target: Long,
-        monthsElapsed: Long,
+        monthsElapsed: Double,
         totalMonths: Long
     ): Long {
         if (totalMonths <= 0) return target
-        if (monthsElapsed <= 0) return base
+        if (monthsElapsed <= 0.0) return base
         if (monthsElapsed >= totalMonths) return target
 
-        val t = monthsElapsed.toDouble() / totalMonths.toDouble()
+        val t = monthsElapsed / totalMonths.toDouble()
         val k = 10.0
         val t0 = 0.7
 

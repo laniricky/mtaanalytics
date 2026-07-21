@@ -208,7 +208,13 @@ private fun RevenueContent(state: RevenueUiState.Success) {
                         style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted, letterSpacing = 1.5.sp)
                     )
                     com.mtaanimation.growthos.android.ui.components.SCurveChart(
-                        allPoints = state.projection.monthlyProjectionPoints
+                        allPoints = state.projection.monthlyProjectionPoints.map {
+                            com.mtaanimation.growthos.shared.projection.ProjectionPoint(
+                                dateEpochMillis = it.dateEpochMillis,
+                                projectedValue = it.projectedValue.toLong(),
+                                actualValue = it.actualValue?.toLong()
+                            )
+                        }
                     )
                 }
             }

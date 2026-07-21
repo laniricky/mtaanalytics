@@ -192,6 +192,28 @@ private fun RevenueContent(state: RevenueUiState.Success) {
             }
         }
 
+        // Section: Revenue Projection Chart
+        if (state.projection != null && state.projection.monthlyProjectionPoints.isNotEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(BrandSurface)
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "12-MONTH REVENUE TRAJECTORY",
+                        style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted, letterSpacing = 1.5.sp)
+                    )
+                    com.mtaanimation.growthos.android.ui.components.SCurveChart(
+                        allPoints = state.projection.monthlyProjectionPoints
+                    )
+                }
+            }
+        }
+
         // Section: Revenue History
         if (state.history.isNotEmpty()) {
             item {

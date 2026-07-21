@@ -3,6 +3,8 @@ package com.mtaanimation.growthos.android.data.network
 import com.mtaanimation.growthos.android.data.datastore.AuthDataStore
 import com.mtaanimation.growthos.shared.models.revenue.RecordRevenueRequest
 import com.mtaanimation.growthos.shared.models.revenue.RevenueEntryDto
+import com.mtaanimation.growthos.shared.projection.ProjectionRequest
+import com.mtaanimation.growthos.shared.projection.RevenueProjection
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -37,6 +39,15 @@ class RevenueApiService @Inject constructor(
             contentType(ContentType.Application.Json)
             bearerAuth(token)
             setBody(request)
+        }.body()
+    }
+
+    suspend fun getRevenueProjection(deadlineEpochMillis: Long? = null): Result<RevenueProjection> = runCatching {
+        val token = authDataStore.tokenFlow.first() ?: error("Not authenticated")
+        client.post("$BASE_URL/api/projections/revenue") {
+            contentType(ContentType.Application.Json)
+            bearerAuth(token)
+            setBody(ProjectionRequest(deadlineEpochMillis = deadlineEpochMillis))
         }.body()
     }
 }

@@ -6,6 +6,7 @@ import com.mtaanimation.growthos.android.domain.repository.DashboardRepository
 import com.mtaanimation.growthos.android.domain.repository.RevenueRepository
 import com.mtaanimation.growthos.shared.models.revenue.RecordRevenueRequest
 import com.mtaanimation.growthos.shared.models.revenue.RevenueEntryDto
+import com.mtaanimation.growthos.shared.projection.RevenueProjection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +22,8 @@ sealed interface RevenueUiState {
         val lastMonthRevenue: Double,
         val currentAudience: Long,
         val arpuPer1000: Double,       // Revenue per 1,000 followers
-        val projected2036Monthly: Double // ARPU * (55M / 1000)
+        val projected2036Monthly: Double, // ARPU * (55M / 1000)
+        val projection: RevenueProjection? = null
     ) : RevenueUiState
     data class Error(val message: String) : RevenueUiState
 }
@@ -60,6 +62,7 @@ class RevenueViewModel @Inject constructor(
             // Fetch both in parallel-ish (sequential is fine, network is fast)
             val revenueResult = repository.getAllRevenue()
             val dashboardResult = dashboardRepository.getDashboard()
+            val projectionResult = repository.getRevenueProjection()
 
             if (revenueResult.isFailure) {
                 _uiState.value = RevenueUiState.Error(revenueResult.exceptionOrNull()?.message ?: "Unknown error")
@@ -87,7 +90,8 @@ class RevenueViewModel @Inject constructor(
                 lastMonthRevenue = lastMonthRevenue,
                 currentAudience = currentAudience,
                 arpuPer1000 = arpuPer1000,
-                projected2036Monthly = projected2036Monthly
+                projected2036Monthly = projected2036Monthly,
+                projection = projectionResult.getOrNull()
             )
         }
     }

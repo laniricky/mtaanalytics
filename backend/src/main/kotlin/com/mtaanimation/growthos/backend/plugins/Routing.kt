@@ -13,6 +13,7 @@ import com.mtaanimation.growthos.backend.routes.uploadRoutes
 import com.mtaanimation.growthos.backend.routes.customGoalRoutes
 import com.mtaanimation.growthos.backend.routes.milestoneLiveValuesRoute
 import com.mtaanimation.growthos.backend.services.ProjectionService
+import com.mtaanimation.growthos.backend.services.RevenueProjectionService
 import io.ktor.http.ContentType
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -26,6 +27,7 @@ fun Application.configureRouting() {
     val platformStatsRepository = PlatformStatsRepository()
     val projectionService = ProjectionService(platformStatsRepository)
     val revenueRepository = com.mtaanimation.growthos.backend.repositories.RevenueRepository()
+    val revenueProjectionService = RevenueProjectionService(revenueRepository)
     val episodeRepository = com.mtaanimation.growthos.backend.repositories.EpisodeRepository()
     val uploadRepository = com.mtaanimation.growthos.backend.repositories.UploadRepository()
     val customGoalRepository = com.mtaanimation.growthos.backend.repositories.CustomGoalRepository()
@@ -100,7 +102,7 @@ fun Application.configureRouting() {
         authRoutes(userRepository)
         goalRoutes(goalRepository, userRepository)
         platformStatsRoutes(platformStatsRepository, userRepository)
-        projectionRoutes(projectionService, userRepository)
+        projectionRoutes(projectionService, revenueProjectionService, userRepository)
         revenueRoutes(revenueRepository, userRepository)
         episodeRoutes(episodeRepository, userRepository)
         uploadRoutes(uploadRepository, userRepository)

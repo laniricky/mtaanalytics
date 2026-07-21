@@ -25,6 +25,10 @@ object GrowthConstants {
     /** Total journey length in months */
     const val TOTAL_MONTHS = 120L
 
+    /** Financial Goal constants */
+    const val REVENUE_BASE_2026 = 500.0
+    const val REVENUE_TARGET_2036 = 50_000.0
+
     data class PlatformGoal(
         val base: Long,   // followers at journey start (July 2026)
         val target: Long  // follower goal (July 2036)

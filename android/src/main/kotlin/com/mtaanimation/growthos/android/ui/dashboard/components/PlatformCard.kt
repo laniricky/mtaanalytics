@@ -174,6 +174,21 @@ fun PlatformCard(
             VelocityChip(label = "Required/Month", value = "${platform.requiredMonthlyGain.formatFollowers()}/mo", color = BrandMuted)
             VelocityChip(label = "Required/Day", value = "${platform.requiredDailyGain.formatFollowers()}/day", color = BrandMuted)
         }
+        
+        // S-Curve Chart
+        if (platform.monthlyProjectionPoints.isNotEmpty()) {
+            val projectedPoints = platform.monthlyProjectionPoints.map { it.projectedValue.toFloat() }
+            val actualPoints = platform.monthlyProjectionPoints.mapNotNull { it.actualValue?.toFloat() }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "10-Year Growth Curve",
+                style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted)
+            )
+            com.mtaanimation.growthos.android.ui.components.SCurveChart(
+                projectedPoints = projectedPoints,
+                actualPoints = actualPoints
+            )
+        }
     }
 }
 

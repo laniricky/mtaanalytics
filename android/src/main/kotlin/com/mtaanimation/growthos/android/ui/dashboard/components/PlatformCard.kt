@@ -175,13 +175,9 @@ fun PlatformCard(
             VelocityChip(label = "Required/Day", value = "${platform.requiredDailyGain.formatFollowers()}/day", color = BrandMuted)
         }
         
-        // S-Curve Chart — passes the full 120-month list; the component handles windowing internally
+        // S-Curve Chart — passes full 120-month list; windowing handled inside the component
         if (platform.monthlyProjectionPoints.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "12-Month Growth Curve",
-                style = MaterialTheme.typography.labelSmall.copy(color = BrandMuted)
-            )
             com.mtaanimation.growthos.android.ui.components.SCurveChart(
                 allPoints = platform.monthlyProjectionPoints
             )
